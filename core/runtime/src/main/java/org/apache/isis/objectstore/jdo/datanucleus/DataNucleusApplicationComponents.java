@@ -18,6 +18,7 @@
  */
 package org.apache.isis.objectstore.jdo.datanucleus;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
@@ -27,6 +28,9 @@ import javax.jdo.PersistenceManagerFactory;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Maps;
 import org.datanucleus.NucleusContext;
+import org.datanucleus.NucleusContextHelper;
+import org.datanucleus.PropertyNames;
+import org.datanucleus.StoreNucleusContext;
 import org.datanucleus.api.jdo.JDOPersistenceManagerFactory;
 import org.datanucleus.metadata.MetaDataListener;
 import org.datanucleus.metadata.MetaDataManager;
@@ -107,7 +111,8 @@ public class DataNucleusApplicationComponents implements ApplicationScopedCompon
         datanucleusProps.put("datanucleus.autoStartClassNames", persistableClassNames);
         persistenceManagerFactory = JDOHelper.getPersistenceManagerFactory(datanucleusProps);
 
-        final boolean createSchema = Boolean.parseBoolean(datanucleusProps.get("datanucleus.autoCreateSchema"));
+        final boolean createSchema = (Boolean.parseBoolean( datanucleusProps.get(PropertyNames.PROPERTY_SCHEMA_AUTOCREATE_SCHEMA) ) ||
+                Boolean.parseBoolean( datanucleusProps.get(PropertyNames.PROPERTY_SCHEMA_AUTOCREATE_ALL) ));
         if(createSchema) {
             createSchema();
         }
@@ -115,16 +120,25 @@ public class DataNucleusApplicationComponents implements ApplicationScopedCompon
         namedQueryByName = catalogNamedQueries(persistableClassNameSet);
     }
     
+
+    public PersistenceManagerFactory getPersistenceManagerFactory() {
+        return persistenceManagerFactory;
+    }
+
     private void createSchema() {
+    	//REF: http://www.datanucleus.org/products/datanucleus/jdo/schema.html
+    	
         final JDOPersistenceManagerFactory jdopmf = (JDOPersistenceManagerFactory)persistenceManagerFactory;
         final NucleusContext nucleusContext = jdopmf.getNucleusContext();
-        final StoreManager storeManager = nucleusContext.getStoreManager();
-        final MetaDataManager metaDataManager = nucleusContext.getMetaDataManager();
+        if (nucleusContext instanceof StoreNucleusContext) {
+            final StoreManager storeManager = ((StoreNucleusContext)nucleusContext).getStoreManager();
+        	final MetaDataManager metaDataManager = nucleusContext.getMetaDataManager();
 
-        registerMetadataListener(metaDataManager);
-        if (storeManager instanceof SchemaAwareStoreManager) {
-            final SchemaAwareStoreManager schemaAwareStoreManager = (SchemaAwareStoreManager) storeManager;
-            schemaAwareStoreManager.createSchema(persistableClassNameSet, asProperties(datanucleusProps));
+	        registerMetadataListener(metaDataManager);
+            if (storeManager instanceof SchemaAwareStoreManager) {
+    	        final SchemaAwareStoreManager schemaAwareStoreManager = (SchemaAwareStoreManager) storeManager;
+        	    schemaAwareStoreManager.createSchema(classesToBePersisted, asProperties(props));
+            }
         }
     }
 
