@@ -121,10 +121,6 @@ public class DataNucleusApplicationComponents implements ApplicationScopedCompon
     }
     
 
-    public PersistenceManagerFactory getPersistenceManagerFactory() {
-        return persistenceManagerFactory;
-    }
-
     private void createSchema() {
     	//REF: http://www.datanucleus.org/products/datanucleus/jdo/schema.html
     	
@@ -137,7 +133,7 @@ public class DataNucleusApplicationComponents implements ApplicationScopedCompon
 	        registerMetadataListener(metaDataManager);
             if (storeManager instanceof SchemaAwareStoreManager) {
     	        final SchemaAwareStoreManager schemaAwareStoreManager = (SchemaAwareStoreManager) storeManager;
-        	    schemaAwareStoreManager.createSchema(classesToBePersisted, asProperties(props));
+       	        schemaAwareStoreManager.createSchemaForClasses(persistableClassNameSet, asProperties(datanucleusProps));
             }
         }
     }
