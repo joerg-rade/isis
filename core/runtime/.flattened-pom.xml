@@ -1,0 +1,235 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Licensed to the Apache Software Foundation (ASF) under one
+  or more contributor license agreements.  See the NOTICE file
+  distributed with this work for additional information
+  regarding copyright ownership.  The ASF licenses this file
+  to you under the Apache License, Version 2.0 (the
+  "License"); you may not use this file except in compliance
+  with the License.  You may obtain a copy of the License at
+
+         http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing,
+  software distributed under the License is distributed on an
+  "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+  KIND, either express or implied.  See the License for the
+  specific language governing permissions and limitations
+  under the License.
+-->
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>org.apache.isis.core</groupId>
+    <artifactId>isis</artifactId>
+    <version>2.0.0-M2-SNAPSHOT</version>
+  </parent>
+  <groupId>org.apache.isis.core</groupId>
+  <artifactId>isis-core-runtime</artifactId>
+  <version>2.0.0-M2-SNAPSHOT</version>
+  <name>Apache Isis Runtime</name>
+  <description>Core framework, providing metamodel, runtime and core APIs.
+
+        Also defines standard build process, as well as
+        standard set of 3rd party dependencies (eg for testing and 
+        logging frameworks).</description>
+  <licenses>
+    <license>
+      <name>Apache License, Version 2.0</name>
+      <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
+      <distribution>repo</distribution>
+    </license>
+  </licenses>
+  <dependencies>
+    <dependency>
+      <groupId>javax.jdo</groupId>
+      <artifactId>jdo-api</artifactId>
+      <version>3.1</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.isis.core</groupId>
+      <artifactId>isis-core-applib</artifactId>
+      <version>2.0.0-M2-SNAPSHOT</version>
+      <type>test-jar</type>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.isis.core</groupId>
+      <artifactId>isis-core-unittestsupport</artifactId>
+      <version>2.0.0-M2-SNAPSHOT</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.isis.core</groupId>
+      <artifactId>isis-core-log4j</artifactId>
+      <version>2.0.0-M2-SNAPSHOT</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.isis.core</groupId>
+      <artifactId>isis-core-metamodel</artifactId>
+      <version>2.0.0-M2-SNAPSHOT</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.isis.core</groupId>
+      <artifactId>isis-core-metamodel</artifactId>
+      <version>2.0.0-M2-SNAPSHOT</version>
+      <type>test-jar</type>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.isis.core</groupId>
+      <artifactId>isis-core-schema</artifactId>
+      <version>2.0.0-M2-SNAPSHOT</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-log4j12</artifactId>
+      <version>1.7.21</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-email</artifactId>
+      <version>1.4</version>
+      <scope>compile</scope>
+      <exclusions>
+        <exclusion>
+          <artifactId>javax.mail</artifactId>
+          <groupId>com.sun.mail</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>activation</artifactId>
+          <groupId>javax.activation</groupId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+      <version>1.7.21</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.jmock</groupId>
+      <artifactId>jmock-junit4</artifactId>
+      <version>2.6.0</version>
+      <scope>test</scope>
+      <exclusions>
+        <exclusion>
+          <artifactId>junit-dep</artifactId>
+          <groupId>junit</groupId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>org.hamcrest</groupId>
+      <artifactId>hamcrest-library</artifactId>
+      <version>1.3</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter-api</artifactId>
+      <version>5.2.0</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter-engine</artifactId>
+      <version>5.2.0</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.junit.vintage</groupId>
+      <artifactId>junit-vintage-engine</artifactId>
+      <version>5.2.0</version>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+  <repositories>
+    <repository>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+      <id>Apache Repository</id>
+      <url>https://repository.apache.org/</url>
+    </repository>
+    <repository>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+      <id>JBoss Public Release</id>
+      <url>https://repository.jboss.org/nexus/content/groups/public-jboss/</url>
+    </repository>
+    <repository>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
+      <id>sonatype-snapshots</id>
+      <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+    </repository>
+    <repository>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+      <id>jboss</id>
+      <url>http://repository.jboss.org/nexus/content/groups/public-jboss/</url>
+    </repository>
+    <repository>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+      <id>maven2-repository.dev.java.net</id>
+      <name>Java.net Repository for Maven</name>
+      <url>http://download.java.net/maven/2/</url>
+    </repository>
+    <repository>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+      <id>maven-repository.dev.java.net</id>
+      <name>Java.net Maven 1 Repository (legacy)</name>
+      <url>http://download.java.net/maven/1</url>
+    </repository>
+    <repository>
+      <releases>
+        <enabled>false</enabled>
+      </releases>
+      <id>apache.snapshots</id>
+      <name>Apache Snapshot Repository</name>
+      <url>https://repository.apache.org/snapshots</url>
+    </repository>
+  </repositories>
+  <profiles>
+    <profile>
+      <id>email-notification-service</id>
+      <activation>
+        <property>
+          <name>!skip.email-notification-service</name>
+        </property>
+      </activation>
+      <dependencies>
+        <dependency>
+          <groupId>org.apache.commons</groupId>
+          <artifactId>commons-email</artifactId>
+          <version>1.4</version>
+          <exclusions>
+            <exclusion>
+              <artifactId>javax.mail</artifactId>
+              <groupId>com.sun.mail</groupId>
+            </exclusion>
+            <exclusion>
+              <artifactId>activation</artifactId>
+              <groupId>javax.activation</groupId>
+            </exclusion>
+          </exclusions>
+        </dependency>
+      </dependencies>
+    </profile>
+  </profiles>
+</project>
