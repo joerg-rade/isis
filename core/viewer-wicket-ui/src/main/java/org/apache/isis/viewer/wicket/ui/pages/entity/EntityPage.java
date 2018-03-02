@@ -182,8 +182,7 @@ public class EntityPage extends PageAbstract {
         }
 
         WebMarkupContainer entityPageContainer = new WebMarkupContainer("entityPageContainer");
-        CssClassAppender.appendCssClassTo(entityPageContainer, objectSpec.getFullIdentifier().replace('.','-'));
-        CssClassAppender.appendCssClassTo(entityPageContainer, objectSpec.getCorrespondingClass().getSimpleName());
+        CssClassAppender.appendCssClassTo(entityPageContainer, objectSpec.getSpecId().asString());
 
         CssClassFacet cssClassFacet = objectSpec.getFacet(CssClassFacet.class);
         if(cssClassFacet != null) {
