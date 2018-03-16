@@ -18,21 +18,23 @@
  */
 package org.apache.isis.schema.utils;
 
-import static org.apache.isis.applib.internal.collections._Maps.entry;
-
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Collection;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.function.Function;
 
-import org.apache.isis.applib.internal.base._Casts;
-import org.apache.isis.applib.internal.base._Strings;
-import org.apache.isis.applib.internal.collections._Maps;
-import org.apache.isis.applib.internal.context._Context;
-import org.apache.isis.applib.internal.exceptions._Exceptions;
+import com.google.common.base.Function;
+import com.google.common.base.Objects;
+import com.google.common.base.Optional;
+import com.google.common.base.Predicate;
+import com.google.common.base.Strings;
+import com.google.common.collect.FluentIterable;
+import com.google.common.collect.ImmutableMap;
+
+import org.joda.time.DateTime;
+import org.joda.time.LocalDate;
+import org.joda.time.LocalDateTime;
+import org.joda.time.LocalTime;
+
 import org.apache.isis.applib.services.bookmark.Bookmark;
 import org.apache.isis.applib.services.bookmark.BookmarkService;
 import org.apache.isis.applib.value.Blob;
@@ -52,64 +54,68 @@ import org.apache.isis.schema.utils.jaxbadapters.JodaDateTimeXMLGregorianCalenda
 import org.apache.isis.schema.utils.jaxbadapters.JodaLocalDateTimeXMLGregorianCalendarAdapter;
 import org.apache.isis.schema.utils.jaxbadapters.JodaLocalDateXMLGregorianCalendarAdapter;
 import org.apache.isis.schema.utils.jaxbadapters.JodaLocalTimeXMLGregorianCalendarAdapter;
-import org.joda.time.DateTime;
-import org.joda.time.LocalDate;
-import org.joda.time.LocalDateTime;
-import org.joda.time.LocalTime;
 
 public final class CommonDtoUtils {
 
-    // -- PARAM_DTO_TO_NAME, PARAM_DTO_TO_TYPE
+    //region > PARAM_DTO_TO_NAME, PARAM_DTO_TO_TYPE
 
-    public static final Function<ParamDto, String> PARAM_DTO_TO_NAME = ParamDto::getName;
-    public static final Function<ParamDto, ValueType> PARAM_DTO_TO_TYPE = ParamDto::getType; 
+    public static final Function<ParamDto, String> PARAM_DTO_TO_NAME = new Function<ParamDto, String>() {
+        @Override public String apply(final ParamDto paramDto) {
+            return paramDto.getName();
+        }
+    };
+    public static final Function<ParamDto, ValueType> PARAM_DTO_TO_TYPE = new Function<ParamDto, ValueType>() {
+        @Override public ValueType apply(final ParamDto paramDto) {
+            return paramDto.getType();
+        }
+    };
+    //endregion
 
-    // -- asValueType
-    private final static Map<Class<?>, ValueType> valueTypeByClass =
-    		_Maps.unmodifiableEntries(
-    				entry(String.class, ValueType.STRING),
-    				entry(String.class, ValueType.STRING),
-                    entry(byte.class, ValueType.BYTE),
-                    entry(Byte.class, ValueType.BYTE),
-                    entry(short.class, ValueType.SHORT),
-                    entry(Short.class, ValueType.SHORT),
-                    entry(int.class, ValueType.INT),
-                    entry(Integer.class, ValueType.INT),
-                    entry(long.class, ValueType.LONG),
-                    entry(Long.class, ValueType.LONG),
-                    entry(char.class, ValueType.CHAR),
-                    entry(Character.class, ValueType.CHAR),
-                    entry(boolean.class, ValueType.BOOLEAN),
-                    entry(Boolean.class, ValueType.BOOLEAN),
-                    entry(float.class, ValueType.FLOAT),
-                    entry(Float.class, ValueType.FLOAT),
-                    entry(double.class, ValueType.DOUBLE),
-                    entry(Double.class, ValueType.DOUBLE),
-                    entry(BigInteger.class, ValueType.BIG_INTEGER),
-                    entry(BigDecimal.class, ValueType.BIG_DECIMAL),
-                    entry(DateTime.class, ValueType.JODA_DATE_TIME),
-                    entry(LocalDateTime.class, ValueType.JODA_LOCAL_DATE_TIME),
-                    entry(LocalDate.class, ValueType.JODA_LOCAL_DATE),
-                    entry(LocalTime.class, ValueType.JODA_LOCAL_TIME),
-                    entry(java.sql.Timestamp.class, ValueType.JAVA_SQL_TIMESTAMP),
-                    entry(Blob.class, ValueType.BLOB),
-                    entry(Clob.class, ValueType.CLOB)
-                    );
+    //region > asValueType
+    private final static ImmutableMap<Class<?>, ValueType> valueTypeByClass =
+            new ImmutableMap.Builder<Class<?>, ValueType>()
+                    .put(String.class, ValueType.STRING)
+                    .put(byte.class, ValueType.BYTE)
+                    .put(Byte.class, ValueType.BYTE)
+                    .put(short.class, ValueType.SHORT)
+                    .put(Short.class, ValueType.SHORT)
+                    .put(int.class, ValueType.INT)
+                    .put(Integer.class, ValueType.INT)
+                    .put(long.class, ValueType.LONG)
+                    .put(Long.class, ValueType.LONG)
+                    .put(char.class, ValueType.CHAR)
+                    .put(Character.class, ValueType.CHAR)
+                    .put(boolean.class, ValueType.BOOLEAN)
+                    .put(Boolean.class, ValueType.BOOLEAN)
+                    .put(float.class, ValueType.FLOAT)
+                    .put(Float.class, ValueType.FLOAT)
+                    .put(double.class, ValueType.DOUBLE)
+                    .put(Double.class, ValueType.DOUBLE)
+                    .put(BigInteger.class, ValueType.BIG_INTEGER)
+                    .put(BigDecimal.class, ValueType.BIG_DECIMAL)
+                    .put(DateTime.class, ValueType.JODA_DATE_TIME)
+                    .put(LocalDateTime.class, ValueType.JODA_LOCAL_DATE_TIME)
+                    .put(LocalDate.class, ValueType.JODA_LOCAL_DATE)
+                    .put(LocalTime.class, ValueType.JODA_LOCAL_TIME)
+                    .put(java.sql.Timestamp.class, ValueType.JAVA_SQL_TIMESTAMP)
+                    .put(Blob.class, ValueType.BLOB)
+                    .put(Clob.class, ValueType.CLOB)
+                    .build();
 
     public static ValueType asValueType(final Class<?> type) {
         final ValueType valueType = valueTypeByClass.get(type);
         if (valueType != null) {
             return valueType;
         }
-        if (type!=null && type.isEnum()) {
+        if (type.isEnum()) {
             return ValueType.ENUM;
         }
         // assume reference otherwise
         return ValueType.REFERENCE;
     }
-    
+    //endregion
 
-    // -- newValueDto, setValueOn
+    //region > newValueDto, setValueOn
 
     public static ValueDto newValueDto(
             final ValueType valueType,
@@ -147,7 +153,7 @@ public final class CommonDtoUtils {
             final Object val,
             final BookmarkService bookmarkService) {
         if(val instanceof Collection) {
-            final Collection<?> collection = (Collection<?>) val;
+            final Collection collection = (Collection) val;
             final CollectionDto collectionDto = asCollectionDto(collection, valueType, bookmarkService);
             valueDto.setCollection(collectionDto);
             return valueDto;
@@ -234,7 +240,7 @@ public final class CommonDtoUtils {
             return valueDto;
         }
         case ENUM: {
-            final Enum<?> argValue = (Enum<?>) val;
+            final Enum argValue = (Enum) val;
             if(argValue == null) {
                 return null;
             }
@@ -247,7 +253,7 @@ public final class CommonDtoUtils {
         case REFERENCE: {
             final Bookmark bookmark = val instanceof Bookmark
                     ? (Bookmark) val
-                    : bookmarkService!=null ? bookmarkService.bookmarkFor(val) : null;
+                    : bookmarkService.bookmarkFor(val);
 
             if (bookmark != null) {
                 OidDto argValue = bookmark.toOidDto();
@@ -256,50 +262,40 @@ public final class CommonDtoUtils {
             return valueDto;
         }
         case BLOB: {
-        	
             final Blob blob = (Blob) val;
-            final BlobDto blobDto = new BlobDto();
-            
-            if(blob==null) {
-                blobDto.setName("#empty");
-                blobDto.setBytes(new byte[0]);
-                blobDto.setMimeType("");	
-        	} else {
+            if(blob != null) {
+                final BlobDto blobDto = new BlobDto();
                 blobDto.setName(blob.getName());
                 blobDto.setBytes(blob.getBytes());
-                blobDto.setMimeType(blob.getMimeType().toString());	
-        	}
-            
-            valueDto.setBlob(blobDto);
+                blobDto.setMimeType(blob.getMimeType().toString());
+                valueDto.setBlob(blobDto);
+            }
             return valueDto;
         }
         case CLOB: {
             final Clob clob = (Clob) val;
-            final ClobDto clobDto = new ClobDto();
-            
-            if(clob==null) {
-                clobDto.setName("#empty");
-                clobDto.setChars("");
-                clobDto.setMimeType("");
-        	} else {
+            if(clob != null) {
+                final ClobDto clobDto = new ClobDto();
                 clobDto.setName(clob.getName());
                 clobDto.setChars(clob.getChars().toString());
                 clobDto.setMimeType(clob.getMimeType().toString());
-        	}
-            
-            valueDto.setClob(clobDto);
+                valueDto.setClob(clobDto);
+            }
             return valueDto;
         }
         case VOID: {
             return null;
         }
         default:
-        	throw _Exceptions.unmatchedCase(valueType);
+            // should never happen; all cases are listed above
+            throw new IllegalArgumentException(String.format(
+                    "newValueDto(): do not recognize valueType %s (likely a framework error)",
+                    valueType));
         }
     }
 
     private static CollectionDto asCollectionDto(
-            final Iterable<?> iterable,
+            final Iterable iterable,
             final ValueType valueType,
             final BookmarkService bookmarkService) {
         final CollectionDto collectionDto = new CollectionDto();
@@ -311,94 +307,100 @@ public final class CommonDtoUtils {
         }
         return collectionDto;
     }
-    
+    //endregion
 
-    // -- getValue (from valueDto)
+    //region > getValue (from valueDto)
 
     public static <T> T getValue(
             final ValueDto valueDto,
             final ValueType valueType) {
-    	return _Casts.uncheckedCast(getValueAsObject(valueDto, valueType));
-    }
-    
-    private static Object getValueAsObject(
-            final ValueDto valueDto,
-            final ValueType valueType) {
         switch(valueType) {
         case STRING:
-            return valueDto.getString();
+            return (T) valueDto.getString();
         case BYTE:
-            return valueDto.getByte();
+            return (T) valueDto.getByte();
         case SHORT:
-            return valueDto.getShort();
+            return (T) valueDto.getShort();
         case INT:
-            return valueDto.getInt();
+            return (T) valueDto.getInt();
         case LONG:
-            return valueDto.getLong();
+            return (T) valueDto.getLong();
         case FLOAT:
-            return valueDto.getFloat();
+            return (T) valueDto.getFloat();
         case DOUBLE:
-            return valueDto.getDouble();
+            return (T) valueDto.getDouble();
         case BOOLEAN:
-            return valueDto.isBoolean();
+            return (T) valueDto.isBoolean();
         case CHAR:
             final String aChar = valueDto.getChar();
-            if(_Strings.isNullOrEmpty(aChar)) { return null; }
-            return (Object)aChar.charAt(0);
+            if(Strings.isNullOrEmpty(aChar)) { return null; }
+            return (T) (Object)aChar.charAt(0);
         case BIG_DECIMAL:
-            return valueDto.getBigDecimal();
+            return (T) valueDto.getBigDecimal();
         case BIG_INTEGER:
-            return valueDto.getBigInteger();
+            return (T) valueDto.getBigInteger();
         case JAVA_SQL_TIMESTAMP:
-            return JavaSqlTimestampXmlGregorianCalendarAdapter.parse(valueDto.getDateTime());
+            return (T) JavaSqlTimestampXmlGregorianCalendarAdapter.parse(valueDto.getDateTime());
         case JODA_DATE_TIME:
-            return JodaDateTimeXMLGregorianCalendarAdapter.parse(valueDto.getDateTime());
+            return (T) JodaDateTimeXMLGregorianCalendarAdapter.parse(valueDto.getDateTime());
         case JODA_LOCAL_DATE:
-            return JodaLocalDateXMLGregorianCalendarAdapter.parse(valueDto.getLocalDate());
+            return (T) JodaLocalDateXMLGregorianCalendarAdapter.parse(valueDto.getLocalDate());
         case JODA_LOCAL_DATE_TIME:
-            return JodaLocalDateTimeXMLGregorianCalendarAdapter.parse(valueDto.getLocalDateTime());
+            return (T) JodaLocalDateTimeXMLGregorianCalendarAdapter.parse(valueDto.getLocalDateTime());
         case JODA_LOCAL_TIME:
-            return JodaLocalTimeXMLGregorianCalendarAdapter.parse(valueDto.getLocalTime());
+            return (T) JodaLocalTimeXMLGregorianCalendarAdapter.parse(valueDto.getLocalTime());
         case ENUM:
             final EnumDto enumDto = valueDto.getEnum();
             final String enumType = enumDto.getEnumType();
-            @SuppressWarnings("rawtypes") 
             final Class<? extends Enum> enumClass = loadClassElseThrow(enumType);
-            return Enum.valueOf(_Casts.uncheckedCast(enumClass), enumDto.getEnumName());
+            return (T) Enum.valueOf(enumClass, enumDto.getEnumName());
         case REFERENCE:
-            return valueDto.getReference();
+            return (T) valueDto.getReference();
         case COLLECTION:
-            return valueDto.getCollection();
+            return (T)valueDto.getCollection();
         case BLOB:
             final BlobDto blobDto = valueDto.getBlob();
-            return new Blob(blobDto.getName(), blobDto.getMimeType(), blobDto.getBytes());
+            return (T)new Blob(blobDto.getName(), blobDto.getMimeType(), blobDto.getBytes());
         case CLOB:
             final ClobDto clobDto = valueDto.getClob();
-            return new Clob(clobDto.getName(), clobDto.getMimeType(), clobDto.getChars());
+            return (T)new Clob(clobDto.getName(), clobDto.getMimeType(), clobDto.getChars());
         case VOID:
             return null;
         default:
-        	throw _Exceptions.unmatchedCase(valueType);
+            // should never happen; all cases are listed above
+            throw new IllegalArgumentException(String.format(
+                    "getValueDto(...): do not recognize valueType %s (likely a framework error)",
+                    valueType));
         }
     }
 
-    private static <T> Class<T> loadClassElseThrow(final String className) {
+    private static <T> Class<T> loadClassElseThrow(final String enumType) {
         try {
-            return _Casts.uncheckedCast(_Context.loadClassAndInitialize(className));
+            return (Class<T>) loadClass(enumType);
         } catch (ClassNotFoundException e) {
-        	
-        	// [ahuber] fallback to pre 2.0.0 behavior, not sure if needed  
-        	try {
-				return _Casts.uncheckedCast(Class.forName(className));
-			} catch (ClassNotFoundException e1) {
-				throw new RuntimeException(e);
-			}
+            throw new RuntimeException(e);
         }
     }
 
-    
+    private static Class<?> loadClass(String className) throws ClassNotFoundException {
+        ClassLoader ccl = Thread.currentThread().getContextClassLoader();
+        if(ccl == null) {
+            return loadClass(className, (ClassLoader)null);
+        } else {
+            try {
+                return loadClass(className, ccl);
+            } catch (ClassNotFoundException var3) {
+                return loadClass(className, (ClassLoader)null);
+            }
+        }
+    }
 
-    // -- newValueWithTypeDto
+    private static Class<?> loadClass(String className, ClassLoader classLoader) throws ClassNotFoundException {
+        return classLoader == null?Class.forName(className):Class.forName(className, true, classLoader);
+    }
+    //endregion
+
+    //region > newValueWithTypeDto
 
 
     public static ValueWithTypeDto newValueWithTypeDto(
@@ -414,9 +416,9 @@ public final class CommonDtoUtils {
         return valueWithTypeDto;
     }
 
-    
+    //endregion
 
-    // -- getValue (from ValueWithTypeDto)
+    //region > getValue (from ValueWithTypeDto)
 
     public static <T> T getValue(final ValueWithTypeDto valueWithTypeDto) {
         if(valueWithTypeDto.isNull()) {
@@ -427,10 +429,10 @@ public final class CommonDtoUtils {
     }
 
 
-    
+    //endregion
 
 
-    // -- newParamDto
+    //region > newParamDto
 
     public static ParamDto newParamDto(
             final String parameterName,
@@ -455,9 +457,9 @@ public final class CommonDtoUtils {
 
         return paramDto;
     }
-    
+    //endregion
 
-    // -- getValue (from ParamDto)
+    //region > getValue (from ParamDto)
 
     public static <T> T getValue(final ParamDto paramDto) {
         if(paramDto.isNull()) {
@@ -467,7 +469,7 @@ public final class CommonDtoUtils {
         return CommonDtoUtils.getValue(paramDto, parameterType);
     }
 
-    
+    //endregion
 
     public static String getMapValue(final MapDto mapDto, final String key) {
         if(mapDto == null) {
@@ -493,9 +495,13 @@ public final class CommonDtoUtils {
     }
 
     private static Optional<MapDto.Entry> entryIfAnyFor(final MapDto mapDto, final String key) {
-    	return mapDto.getEntry().stream()
-    	.filter(entry->Objects.equals(entry.getKey(), key))
-    	.findFirst();
+        return FluentIterable.from(mapDto.getEntry())
+                    .firstMatch(new Predicate<MapDto.Entry>() {
+                        @Override
+                        public boolean apply(final MapDto.Entry entry) {
+                            return Objects.equal(entry.getKey(), key);
+                        }
+                    });
     }
 
 }
