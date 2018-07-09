@@ -32,7 +32,8 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Multimaps;
 
 import org.apache.isis.applib.annotation.Programmatic;
-import org.apache.isis.applib.annotation.PublishingChangeKind;
+import org.apache.isis.applib.annotation.PublishedObject;
+import org.apache.isis.applib.services.RepresentsInteractionMemberExecution;
 import org.apache.isis.applib.services.publish.PublishedObjects;
 import org.apache.isis.core.metamodel.adapter.ObjectAdapter;
 import org.apache.isis.core.metamodel.adapter.oid.RootOid;
@@ -45,16 +46,16 @@ import org.apache.isis.schema.utils.jaxbadapters.JavaSqlTimestampXmlGregorianCal
 /**
  * Captures which objects were created, updated or deleted in the course of a transaction.
  */
-public class PublishedObjectsDefault implements PublishedObjects {
+public class PublishedObjectsDefault implements PublishedObjects, RepresentsInteractionMemberExecution {
 
-    // -- constructor, fields
+    //region > constructor, fields
     private UUID transactionUuid;
     private final int sequence;
     private final String userName;
     private final Timestamp completedAt;
     private final int numberLoaded;
     private final int numberObjectPropertiesModified;
-    private final Map<ObjectAdapter, PublishingChangeKind> changesByAdapter;
+    private final Map<ObjectAdapter, PublishedObject.ChangeKind> changesByAdapter;
 
     public PublishedObjectsDefault(
             final UUID transactionUuid,
@@ -63,7 +64,7 @@ public class PublishedObjectsDefault implements PublishedObjects {
             final Timestamp completedAt,
             final int numberLoaded,
             final int numberObjectPropertiesModified,
-            final Map<ObjectAdapter, PublishingChangeKind> changesByAdapter) {
+            final Map<ObjectAdapter, PublishedObject.ChangeKind> changesByAdapter) {
         this.transactionUuid = transactionUuid;
         this.sequence = sequence;
         this.userName = userName;
@@ -72,10 +73,10 @@ public class PublishedObjectsDefault implements PublishedObjects {
         this.numberObjectPropertiesModified = numberObjectPropertiesModified;
         this.changesByAdapter = changesByAdapter;
     }
-    
+    //endregion
 
 
-    // -- transactionId, completedAt, user
+    //region > transactionId, sequence completedAt, user
     @Programmatic
     @Override
     public UUID getTransactionId() {
@@ -90,6 +91,12 @@ public class PublishedObjectsDefault implements PublishedObjects {
         this.transactionUuid = transactionId;
     }
 
+    @Programmatic
+    @Override
+    public int getSequence() {
+        return sequence;
+    }
+
     /**
      * The date/time at which this set of enlisted objects was created (approx the completion time of the transaction).
      */
@@ -102,9 +109,9 @@ public class PublishedObjectsDefault implements PublishedObjects {
     public String getUsername() {
         return userName;
     }
-    
+    //endregion
 
-    // -- dto
+    //region > dto
     /**
      * lazily computed
      */
@@ -114,9 +121,9 @@ public class PublishedObjectsDefault implements PublishedObjects {
     public ChangesDto getDto() {
         return dto != null ? dto : (dto = newDto());
     }
-    
+    //endregion
 
-    // -- numberLoaded, numberCreated, numberUpdated, numberDeleted, numberObjectPropertiesModified
+    //region > numberLoaded, numberCreated, numberUpdated, numberDeleted, numberObjectPropertiesModified
 
     @Override
     public int getNumberLoaded() {
@@ -125,17 +132,17 @@ public class PublishedObjectsDefault implements PublishedObjects {
 
     @Override
     public int getNumberCreated() {
-        return numAdaptersOfKind(PublishingChangeKind.CREATE);
+        return numAdaptersOfKind(PublishedObject.ChangeKind.CREATE);
     }
 
     @Override
     public int getNumberUpdated() {
-        return numAdaptersOfKind(PublishingChangeKind.UPDATE);
+        return numAdaptersOfKind(PublishedObject.ChangeKind.UPDATE);
     }
 
     @Override
     public int getNumberDeleted() {
-        return numAdaptersOfKind(PublishingChangeKind.DELETE);
+        return numAdaptersOfKind(PublishedObject.ChangeKind.DELETE);
     }
 
     @Override
@@ -143,7 +150,7 @@ public class PublishedObjectsDefault implements PublishedObjects {
         return numberObjectPropertiesModified;
     }
 
-    private int numAdaptersOfKind(final PublishingChangeKind kind) {
+    private int numAdaptersOfKind(final PublishedObject.ChangeKind kind) {
         final Collection<ObjectAdapter> objectAdapters = adaptersByChange().get(kind);
         return objectAdapters != null ? objectAdapters.size() : 0;
     }
@@ -152,9 +159,9 @@ public class PublishedObjectsDefault implements PublishedObjects {
     /**
      * Lazily populated
      */
-    private Map<PublishingChangeKind, Collection<ObjectAdapter>> adaptersByChange;
+    private Map<PublishedObject.ChangeKind, Collection<ObjectAdapter>> adaptersByChange;
 
-    private Map<PublishingChangeKind, Collection<ObjectAdapter>> adaptersByChange() {
+    private Map<PublishedObject.ChangeKind, Collection<ObjectAdapter>> adaptersByChange() {
         return adaptersByChange != null? adaptersByChange : (adaptersByChange = invert(changesByAdapter));
     }
 
@@ -167,10 +174,10 @@ public class PublishedObjectsDefault implements PublishedObjects {
         );
     }
 
-    
+    //endregion
 
 
-    // -- newDto, newObjectsDto, newChangesDto
+    //region > newDto, newObjectsDto, newChangesDto
 
     private ChangesDto newDto() {
         final ObjectsDto objectsDto = newObjectsDto();
@@ -181,9 +188,9 @@ public class PublishedObjectsDefault implements PublishedObjects {
 
         final ObjectsDto objectsDto = new ObjectsDto();
 
-        objectsDto.setCreated(oidsDtoFor(PublishingChangeKind.CREATE));
-        objectsDto.setUpdated(oidsDtoFor(PublishingChangeKind.UPDATE));
-        objectsDto.setDeleted(oidsDtoFor(PublishingChangeKind.DELETE));
+        objectsDto.setCreated(oidsDtoFor(PublishedObject.ChangeKind.CREATE));
+        objectsDto.setUpdated(oidsDtoFor(PublishedObject.ChangeKind.UPDATE));
+        objectsDto.setDeleted(oidsDtoFor(PublishedObject.ChangeKind.DELETE));
 
         objectsDto.setLoaded(getNumberLoaded());
         objectsDto.setPropertiesModified(getNumberPropertiesModified());
@@ -191,10 +198,10 @@ public class PublishedObjectsDefault implements PublishedObjects {
         return objectsDto;
     }
 
-    private OidsDto oidsDtoFor(final PublishingChangeKind kind) {
+    private OidsDto oidsDtoFor(final PublishedObject.ChangeKind kind) {
         final OidsDto oidsDto = new OidsDto();
 
-        final Map<PublishingChangeKind, Collection<ObjectAdapter>> adaptersByChange = adaptersByChange();
+        final Map<PublishedObject.ChangeKind, Collection<ObjectAdapter>> adaptersByChange = adaptersByChange();
 
         final Collection<ObjectAdapter> adapters = adaptersByChange.get(kind);
         if(adapters != null) {
@@ -229,7 +236,7 @@ public class PublishedObjectsDefault implements PublishedObjects {
     }
 
 
-    
+    //endregion
 
 
 }
