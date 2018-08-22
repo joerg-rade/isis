@@ -30,7 +30,6 @@ import org.apache.isis.applib.AppManifest;
 import org.apache.isis.applib.clock.Clock;
 import org.apache.isis.applib.fixtures.FixtureClock;
 import org.apache.isis.applib.fixturescripts.FixtureScripts;
-import org.apache.isis.applib.internal.context._Context;
 import org.apache.isis.applib.services.fixturespec.FixtureScriptsDefault;
 import org.apache.isis.core.commons.config.IsisConfigurationDefault;
 import org.apache.isis.core.commons.lang.ListExtensions;
@@ -59,7 +58,7 @@ public class IsisSessionFactoryBuilder {
 
     private boolean initialized = false;
 
-    // -- constructors, accessors
+    //region > constructors, accessors
 
     private final IsisComponentProvider componentProvider;
     private final DeploymentCategory deploymentCategory;
@@ -93,9 +92,9 @@ public class IsisSessionFactoryBuilder {
         return appManifest;
     }
 
-    
+    //endregion
 
-    // -- buildSessionFactory
+    //region > buildSessionFactory
 
     public IsisSessionFactory buildSessionFactory() {
 
@@ -155,7 +154,7 @@ public class IsisSessionFactoryBuilder {
             servicesInjector.addFallbackIfRequired(SpecificationLoader.class, specificationLoader);
 
             // persistenceSessionFactory
-            final PersistenceSessionFactory persistenceSessionFactory = PersistenceSessionFactory.of(configuration);
+            final PersistenceSessionFactory persistenceSessionFactory = new PersistenceSessionFactory(configuration);
             servicesInjector.addFallbackIfRequired(PersistenceSessionFactory.class, persistenceSessionFactory);
 
 
@@ -163,7 +162,6 @@ public class IsisSessionFactoryBuilder {
 
             // instantiate the IsisSessionFactory
             isisSessionFactory = new IsisSessionFactory(deploymentCategory, servicesInjector, appManifest);
-
 
             // now, add the IsisSessionFactory itself into ServicesInjector, so it can be @javax.inject.Inject'd
             // into any internal domain services
@@ -174,9 +172,10 @@ public class IsisSessionFactoryBuilder {
             // finally, wire up components and components into services...
             servicesInjector.autowire();
 
+
             // ... and make IsisSessionFactory available via the IsisContext static for those places where we cannot
             // yet inject.
-            _Context.putSingleton(IsisSessionFactory.class, isisSessionFactory);
+            IsisContext.setSessionFactory(isisSessionFactory);
 
             // time to initialize...
             specificationLoader.init();
@@ -201,24 +200,28 @@ public class IsisSessionFactoryBuilder {
             authenticationManager.init(deploymentCategory);
             authorizationManager.init(deploymentCategory);
 
-            persistenceSessionFactory.init(specificationLoader);
+            persistenceSessionFactory.init(configuration);
+
+            persistenceSessionFactory.catalogNamedQueries(specificationLoader);
 
             isisSessionFactory.constructServices();
 
-
             isisSessionFactory.doInSession(
-                    () -> {
-                        specificationLoader.postProcess();
-                        try {
-                            specificationLoader.validateAndAssert();
+                    new Runnable() {
+                        @Override
+                        public void run() {
+                            specificationLoader.postProcess();
+                            try {
+                                specificationLoader.validateAndAssert();
 
-                        } catch (final MetaModelInvalidException ex) {
-                            // no need to use a higher level, such as error(...); the calling code will expose any metamodel
-                            // validation errors in their own particular way.
-                            if(LOG.isDebugEnabled()) {
-                                LOG.debug("Meta model invalid", ex);
+                            } catch (final MetaModelInvalidException ex) {
+                                // no need to use a higher level, such as error(...); the calling code will expose any metamodel
+                                // validation errors in their own particular way.
+                                if(LOG.isDebugEnabled()) {
+                                    LOG.debug("Meta model invalid", ex);
+                                }
+                                IsisContext.setMetaModelInvalidException(ex);
                             }
-                            _Context.putSingleton(MetaModelInvalidException.class, ex);
                         }
                     }
             );
@@ -236,13 +239,13 @@ public class IsisSessionFactoryBuilder {
         return ListExtensions.filtered(Arrays.asList(possibleRefiners), MetaModelRefiner.class);
     }
 
-    
+    //endregion
 
     // region > metaModel validity
     public boolean isMetaModelValid() {
         return IsisContext.getMetaModelInvalidExceptionIfAny() == null;
     }
-    
+    //endregion
 
 
 }
