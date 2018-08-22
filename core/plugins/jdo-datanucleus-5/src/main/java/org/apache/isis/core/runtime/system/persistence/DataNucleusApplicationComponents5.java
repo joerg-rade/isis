@@ -108,7 +108,7 @@ public class DataNucleusApplicationComponents5 implements ApplicationScopedCompo
     private void initialize() {
         persistenceManagerFactory = createPmfAndSchemaIfRequired(persistableClassNameSet, datanucleusProps);
 
-        namedQueryByName = catalogNamedQueries(persistableClassNameSet);
+        namedQueryByName = catalogNamedQueries(persistableClassNameSet, specificationLoader);
     }
     
     /** 
@@ -248,7 +248,8 @@ public class DataNucleusApplicationComponents5 implements ApplicationScopedCompo
         return properties;
     }
 
-    private Map<String, JdoNamedQuery> catalogNamedQueries(Set<String> persistableClassNames) {
+    static Map<String, JdoNamedQuery> catalogNamedQueries(
+            Set<String> persistableClassNames, final SpecificationLoader specificationLoader) {
         final Map<String, JdoNamedQuery> namedQueryByName = Maps.newHashMap();
         for (final String persistableClassName: persistableClassNames) {
             final ObjectSpecification spec = specificationLoader.loadSpecification(persistableClassName);
