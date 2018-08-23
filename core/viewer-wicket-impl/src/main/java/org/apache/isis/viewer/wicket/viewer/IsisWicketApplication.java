@@ -28,12 +28,54 @@ import java.util.ServiceLoader;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.Callable;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
-import org.apache.isis.applib.internal.collections._Lists;
-import org.apache.isis.applib.internal.context._Context;
-import org.apache.isis.applib.internal.resources._Resource;
+import com.google.common.base.Function;
+import com.google.common.base.Joiner;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
+import com.google.common.io.Resources;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
+import com.google.inject.Module;
+
+import org.apache.wicket.Application;
+import org.apache.wicket.Component;
+import org.apache.wicket.ConverterLocator;
+import org.apache.wicket.IConverterLocator;
+import org.apache.wicket.Page;
+import org.apache.wicket.RuntimeConfigurationType;
+import org.apache.wicket.SharedResources;
+import org.apache.wicket.ajax.AjaxRequestTarget;
+import org.apache.wicket.authentication.IAuthenticationStrategy;
+import org.apache.wicket.authentication.strategy.DefaultAuthenticationStrategy;
+import org.apache.wicket.authroles.authentication.AuthenticatedWebApplication;
+import org.apache.wicket.authroles.authentication.AuthenticatedWebSession;
+import org.apache.wicket.core.request.mapper.MountedMapper;
+import org.apache.wicket.devutils.debugbar.DebugBar;
+import org.apache.wicket.devutils.debugbar.InspectorDebugPanel;
+import org.apache.wicket.devutils.debugbar.PageSizeDebugPanel;
+import org.apache.wicket.devutils.debugbar.SessionSizeDebugPanel;
+import org.apache.wicket.devutils.debugbar.VersionDebugContributor;
+import org.apache.wicket.devutils.diskstore.DebugDiskDataStore;
+import org.apache.wicket.guice.GuiceComponentInjector;
+import org.apache.wicket.markup.head.IHeaderResponse;
+import org.apache.wicket.markup.head.filter.JavaScriptFilteredIntoFooterHeaderResponse;
+import org.apache.wicket.markup.html.IHeaderContributor;
+import org.apache.wicket.markup.html.IHeaderResponseDecorator;
+import org.apache.wicket.markup.html.WebPage;
+import org.apache.wicket.request.cycle.IRequestCycleListener;
+import org.apache.wicket.request.cycle.PageRequestHandlerTracker;
+import org.apache.wicket.request.cycle.RequestCycleListenerCollection;
+import org.apache.wicket.request.resource.CssResourceReference;
+import org.apache.wicket.settings.DebugSettings;
+import org.apache.wicket.settings.RequestCycleSettings;
+import org.apache.wicket.util.IContextProvider;
+import org.apache.wicket.util.time.Duration;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.wicketstuff.select2.ApplicationSettings;
+
 import org.apache.isis.core.commons.authentication.AuthenticationSession;
 import org.apache.isis.core.commons.config.IsisConfiguration;
 import org.apache.isis.core.commons.config.IsisConfigurationDefault;
@@ -77,51 +119,6 @@ import org.apache.isis.viewer.wicket.viewer.integration.wicket.ConverterForObjec
 import org.apache.isis.viewer.wicket.viewer.integration.wicket.ConverterForObjectAdapterMemento;
 import org.apache.isis.viewer.wicket.viewer.integration.wicket.WebRequestCycleForIsis;
 import org.apache.isis.viewer.wicket.viewer.settings.IsisResourceSettings;
-import org.apache.wicket.Application;
-import org.apache.wicket.Component;
-import org.apache.wicket.ConverterLocator;
-import org.apache.wicket.IConverterLocator;
-import org.apache.wicket.Page;
-import org.apache.wicket.RuntimeConfigurationType;
-import org.apache.wicket.SharedResources;
-import org.apache.wicket.ajax.AjaxRequestTarget;
-import org.apache.wicket.authentication.IAuthenticationStrategy;
-import org.apache.wicket.authentication.strategy.DefaultAuthenticationStrategy;
-import org.apache.wicket.authroles.authentication.AuthenticatedWebApplication;
-import org.apache.wicket.authroles.authentication.AuthenticatedWebSession;
-import org.apache.wicket.core.request.mapper.MountedMapper;
-import org.apache.wicket.devutils.debugbar.DebugBar;
-import org.apache.wicket.devutils.debugbar.InspectorDebugPanel;
-import org.apache.wicket.devutils.debugbar.PageSizeDebugPanel;
-import org.apache.wicket.devutils.debugbar.SessionSizeDebugPanel;
-import org.apache.wicket.devutils.debugbar.VersionDebugContributor;
-import org.apache.wicket.devutils.diskstore.DebugDiskDataStore;
-import org.apache.wicket.guice.GuiceComponentInjector;
-import org.apache.wicket.markup.head.IHeaderResponse;
-import org.apache.wicket.markup.head.filter.JavaScriptFilteredIntoFooterHeaderResponse;
-import org.apache.wicket.markup.html.IHeaderContributor;
-import org.apache.wicket.markup.html.IHeaderResponseDecorator;
-import org.apache.wicket.markup.html.WebPage;
-import org.apache.wicket.request.cycle.IRequestCycleListener;
-import org.apache.wicket.request.cycle.PageRequestHandlerTracker;
-import org.apache.wicket.request.cycle.RequestCycleListenerCollection;
-import org.apache.wicket.request.resource.CssResourceReference;
-import org.apache.wicket.settings.DebugSettings;
-import org.apache.wicket.settings.RequestCycleSettings;
-import org.apache.wicket.util.IContextProvider;
-import org.apache.wicket.util.time.Duration;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.wicketstuff.select2.ApplicationSettings;
-
-import com.google.common.base.Function;
-import com.google.common.base.Joiner;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
-import com.google.common.io.Resources;
-import com.google.inject.Guice;
-import com.google.inject.Injector;
-import com.google.inject.Module;
 
 import de.agilecoders.wicket.core.Bootstrap;
 import de.agilecoders.wicket.core.markup.html.bootstrap.behavior.BootstrapBaseBehavior;
@@ -336,8 +333,6 @@ public class IsisWicketApplication
         List<Future<Object>> futures = null;
         try {
             super.init();
-            
-            _Context.putSingleton(ClassLoader.class, this.getClass().getClassLoader());
 
             futures = startBackgroundInitializationThreads();
 
@@ -351,8 +346,6 @@ public class IsisWicketApplication
 
             final IsisConfigurationBuilder isisConfigurationBuilder = obtainConfigBuilder();
             isisConfigurationBuilder.addDefaultConfigurationResourcesAndPrimers();
-
-            _Resource.putContextPath(getServletContext().getContextPath());
 
             final IsisConfigurationDefault configuration = isisConfigurationBuilder.getConfiguration();
 
@@ -448,15 +441,47 @@ public class IsisWicketApplication
     }
 
     protected List<Future<Object>> startBackgroundInitializationThreads() {
-        return ThreadPoolSupport.getInstance().invokeAll(_Lists.<Callable<Object>>unmodifiable(
-        		
-        		Executors.callable(this::configureWebJars),
-        		Executors.callable(this::configureWicketBootstrap),
-        		Executors.callable(this::configureWicketSelect2),
-        		Executors.callable(ChangesDtoUtils::init),
-        		Executors.callable(InteractionDtoUtils::init),
-        		Executors.callable(CommandDtoUtils::init)
-        ));
+        return ThreadPoolSupport.invokeAll(
+                new Callable<Object>() {
+                    @Override
+                    public Object call() throws Exception {
+                        configureWebJars();
+                        return null;
+                    }
+                },
+                new Callable<Object>() {
+                    @Override
+                    public Object call() throws Exception {
+                        configureWicketBootstrap();
+                        return null;
+                    }
+                },
+                new Callable<Object>() {
+                    @Override
+                    public Object call() throws Exception {
+                        configureWicketSelect2();
+                        return null;
+                    }
+                },
+                new Callable<Object>() {
+                    @Override public Object call() throws Exception {
+                        ChangesDtoUtils.init();
+                        return null;
+                    }
+                },
+                new Callable<Object>() {
+                    @Override public Object call() throws Exception {
+                        InteractionDtoUtils.init();
+                        return null;
+                    }
+                },
+                new Callable<Object>() {
+                    @Override public Object call() throws Exception {
+                        CommandDtoUtils.init();
+                        return null;
+                    }
+                }
+        );
     }
 
     /**
@@ -834,7 +859,6 @@ public class IsisWicketApplication
             }
             getServletContext().setAttribute(WebAppConstants.ISIS_SESSION_FACTORY, null);
             super.onDestroy();
-            IsisContext.clear();
         } catch(final RuntimeException ex) {
             // symmetry with #init()
             LOG.error("Failed to destroy", ex);

@@ -19,6 +19,7 @@
 
 package org.apache.isis.core.runtime.threadpool;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
@@ -29,28 +30,20 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.isis.applib.internal.collections._Lists;
-import org.apache.isis.applib.internal.context._Context;
+import com.google.common.collect.Lists;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * ThreadPoolSupport is application-scoped, meaning ThreadPoolSupport is closed on
- * application's end of life-cycle. 
- * <br/><br/>
- * Implementation Note: ThreadPoolSupport::close is triggered by _Context.clear() 
- * when application shuts down.
- *
- */
-public final class ThreadPoolSupport implements AutoCloseable {
+public final class ThreadPoolSupport {
 
     private static final Logger LOG = LoggerFactory.getLogger(ThreadPoolSupport.class);
 
-    private final ThreadGroup group;
-    private final ThreadPoolExecutor executor;
+    public static ThreadGroup group;
 
-    private ThreadPoolSupport() {
-    	
+    public static ThreadPoolExecutor executor   ;
+
+    static {
         group = new ThreadGroup(ThreadPoolSupport.class.getName());
 
         final int corePoolSize = Runtime.getRuntime().availableProcessors();
@@ -80,7 +73,7 @@ public final class ThreadPoolSupport implements AutoCloseable {
 
         final long t0 = System.currentTimeMillis();
         try{
-            final List<Object> returnValues = _Lists.newArrayList();
+            final List<Object> returnValues = Lists.newArrayList();
             for (Future<Object> future : futures) {
                 returnValues.add(join(future));
             }
@@ -100,21 +93,24 @@ public final class ThreadPoolSupport implements AutoCloseable {
         return null;
     }
 
-    public List<Future<Object>> invokeAll(final List<Callable<Object>> callables) {
+    public static List<Future<Object>> invokeAll(final List<Callable<Object>> callables) {
         try {
             return executor.invokeAll(callables);
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
     }
-    
-    public static ThreadPoolSupport getInstance() {
-    	return _Context.computeIfAbsent(ThreadPoolSupport.class, __-> new ThreadPoolSupport());
+    public static List<Future<Object>> invokeAll(final Callable<Object>... callables) {
+        return invokeAll(Arrays.asList(callables));
+    }
+    public static List<Future<Object>> invokeSerial(final Callable<Object>... callables) {
+        List<Future<Object>> futures = Lists.newArrayList();
+        for (Callable<Object> callable : callables) {
+            List<Future<Object>> x = invokeAll(callable);
+            join(x);
+            futures.addAll(x);
+        }
+        return futures;
     }
 
-	@Override
-	public void close() throws Exception {
-		executor.shutdown();
-	}
-    
 }
