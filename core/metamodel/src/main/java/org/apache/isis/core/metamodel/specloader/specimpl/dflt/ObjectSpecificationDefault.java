@@ -23,6 +23,7 @@ import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -31,8 +32,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.apache.isis.applib.annotation.NatureOfService;
-import com.google.common.base.Predicate;
-
+import org.apache.isis.applib.filter.Filter;
+import org.apache.isis.applib.filter.Filters;
 import org.apache.isis.core.commons.lang.StringExtensions;
 import org.apache.isis.core.commons.util.ToString;
 import org.apache.isis.core.metamodel.adapter.ObjectAdapter;
@@ -77,7 +78,7 @@ public class ObjectSpecificationDefault extends ObjectSpecificationAbstract impl
         return name.substring(name.lastIndexOf('.') + 1);
     }
 
-    // -- constructor, fields
+    //region > constructor, fields
 
     /**
      * Lazily built by {@link #getMember(Method)}.
@@ -102,15 +103,15 @@ public class ObjectSpecificationDefault extends ObjectSpecificationAbstract impl
     }
 
 
+    //endregion
 
-    
-
-    // -- introspectTypeHierarchyAndMembers
+    //region > introspectTypeHierarchyAndMembers
     @Override
     public void introspectTypeHierarchyAndMembers() {
 
+        metadataProperties = null;
         if(isNotIntrospected()) {
-            facetedMethodsBuilder.introspectClass();
+            metadataProperties = facetedMethodsBuilder.introspectClass();
         }
         
         // name
@@ -163,14 +164,16 @@ public class ObjectSpecificationDefault extends ObjectSpecificationAbstract impl
 
         // associations and actions
         if(isNotIntrospected()) {
-            final List<ObjectAssociation> associations = createAssociations();
+            final List<ObjectAssociation> associations = createAssociations(metadataProperties);
             sortAndUpdateAssociations(associations);
         }
 
         if(isNotIntrospected()) {
-            final List<ObjectAction> actions = createActions();
+            final List<ObjectAction> actions = createActions(metadataProperties);
             sortCacheAndUpdateActions(actions);
         }
+
+
 
 
         if(isNotIntrospected()) {
@@ -197,11 +200,11 @@ public class ObjectSpecificationDefault extends ObjectSpecificationAbstract impl
         }
     }
 
-    
+    //endregion
 
-    // -- create associations and actions
-    private List<ObjectAssociation> createAssociations() {
-        final List<FacetedMethod> associationFacetedMethods = facetedMethodsBuilder.getAssociationFacetedMethods();
+    //region > create associations and actions
+    private List<ObjectAssociation> createAssociations(Properties properties) {
+        final List<FacetedMethod> associationFacetedMethods = facetedMethodsBuilder.getAssociationFacetedMethods(properties);
         final List<ObjectAssociation> associations = Lists.newArrayList();
         for (FacetedMethod facetedMethod : associationFacetedMethods) {
             final ObjectAssociation association = createAssociation(facetedMethod);
@@ -223,8 +226,8 @@ public class ObjectSpecificationDefault extends ObjectSpecificationAbstract impl
         }
     }
 
-    private List<ObjectAction> createActions() {
-        final List<FacetedMethod> actionFacetedMethods = facetedMethodsBuilder.getActionFacetedMethods();
+    private List<ObjectAction> createActions(Properties metadataProperties) {
+        final List<FacetedMethod> actionFacetedMethods = facetedMethodsBuilder.getActionFacetedMethods(metadataProperties);
         final List<ObjectAction> actions = Lists.newArrayList();
         for (FacetedMethod facetedMethod : actionFacetedMethods) {
             final ObjectAction action = createAction(facetedMethod);
@@ -244,9 +247,9 @@ public class ObjectSpecificationDefault extends ObjectSpecificationAbstract impl
         }
     }
 
-    
+    //endregion
 
-    // -- isXxx
+    //region > isXxx
 
     @Override
     public boolean isViewModel() {
@@ -278,31 +281,28 @@ public class ObjectSpecificationDefault extends ObjectSpecificationAbstract impl
         return isService;
     }
 
-    
+    //endregion
 
-    // -- getObjectAction
+    //region > getObjectAction
 
     @Override
     public ObjectAction getObjectAction(final ActionType type, final String id, final List<ObjectSpecification> parameters) {
-        final List<ObjectAction> actions =
-                getObjectActions(type, Contributed.INCLUDED,
-                        com.google.common.base.Predicates.<ObjectAction>alwaysTrue());
+        final List<ObjectAction> actions = 
+                getObjectActions(type, Contributed.INCLUDED, Filters.<ObjectAction>any());
         return firstAction(actions, id, parameters);
     }
 
     @Override
     public ObjectAction getObjectAction(final ActionType type, final String id) {
-        final List<ObjectAction> actions =
-                getObjectActions(type, Contributed.INCLUDED,
-                        com.google.common.base.Predicates.<ObjectAction>alwaysTrue());
+        final List<ObjectAction> actions = 
+                getObjectActions(type, Contributed.INCLUDED, Filters.<ObjectAction>any()); 
         return firstAction(actions, id);
     }
 
     @Override
     public ObjectAction getObjectAction(final String id) {
-        final List<ObjectAction> actions =
-                getObjectActions(ActionType.ALL, Contributed.INCLUDED,
-                        com.google.common.base.Predicates.<ObjectAction>alwaysTrue());
+        final List<ObjectAction> actions = 
+                getObjectActions(ActionType.ALL, Contributed.INCLUDED, Filters.<ObjectAction>any()); 
         return firstAction(actions, id);
     }
 
@@ -347,9 +347,9 @@ public class ObjectSpecificationDefault extends ObjectSpecificationAbstract impl
         return null;
     }
 
-    
+    //endregion
 
-    // -- getMember, catalog... (not API)
+    //region > getMember, catalog... (not API)
 
     public ObjectMember getMember(final Method method) {
         if (membersByMethod == null) {
@@ -366,11 +366,11 @@ public class ObjectSpecificationDefault extends ObjectSpecificationAbstract impl
     }
     
     private void cataloguePropertiesAndCollections(final Map<Method, ObjectMember> membersByMethod) {
-        final Predicate<ObjectAssociation> noop = com.google.common.base.Predicates.alwaysTrue();
+        final Filter<ObjectAssociation> noop = Filters.anyOfType(ObjectAssociation.class);
         final List<ObjectAssociation> fields = getAssociations(Contributed.EXCLUDED, noop);
         for (int i = 0; i < fields.size(); i++) {
             final ObjectAssociation field = fields.get(i);
-            final List<Facet> facets = field.getFacets(ImperativeFacet.PREDICATE);
+            final List<Facet> facets = field.getFacets(ImperativeFacet.FILTER);
             for (final Facet facet : facets) {
                 final ImperativeFacet imperativeFacet = ImperativeFacet.Util.getImperativeFacet(facet);
                 for (final Method imperativeFacetMethod : imperativeFacet.getMethods()) {
@@ -384,7 +384,7 @@ public class ObjectSpecificationDefault extends ObjectSpecificationAbstract impl
         final List<ObjectAction> userActions = getObjectActions(Contributed.INCLUDED);
         for (int i = 0; i < userActions.size(); i++) {
             final ObjectAction userAction = userActions.get(i);
-            final List<Facet> facets = userAction.getFacets(ImperativeFacet.PREDICATE);
+            final List<Facet> facets = userAction.getFacets(ImperativeFacet.FILTER);
             for (final Facet facet : facets) {
                 final ImperativeFacet imperativeFacet = ImperativeFacet.Util.getImperativeFacet(facet);
                 for (final Method imperativeFacetMethod : imperativeFacet.getMethods()) {
@@ -394,18 +394,19 @@ public class ObjectSpecificationDefault extends ObjectSpecificationAbstract impl
         }
     }
 
-    
+    //endregion
 
-    // -- toString
+    //region > toString
     @Override
     public String toString() {
         final ToString str = new ToString(this);
         str.append("class", getFullIdentifier());
         str.append("type", (isParentedOrFreeCollection() ? "Collection" : "Object"));
+        str.append("persistable", persistability());
         str.append("superclass", superclass() == null ? "Object" : superclass().getFullIdentifier());
         return str.toString();
     }
 
-    
+    //endregion
 
 }
