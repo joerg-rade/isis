@@ -16,14 +16,10 @@ One use case for this is for regression testing, allowing a production usages to
 There are a number of related use cases:
 
 * they enable profiling of the running application (which actions are invoked then most often, what is their response time)
-
-
-* if xref:../rgsvc/rgsvc.adoc#_rgsvc_persistence-layer-spi_PublisherService[`PublisherService`] is configured, they provide
-better traceability as the `Command` is also correlated with any published events, again through the unique
-`transactionId` GUID
-* if xref:../rgsvc/rgsvc.adoc#_rgsvc_spi_AuditerService[`AuditerService`](s) are configured, they provide better audit
-information, since the `Command` (the 'cause' of an action) can be correlated to the audit records (the "effect" of
-the action) through the `transactionId` GUID
+* if xref:../rgsvc/rgsvc.adoc#_rgsvc_persistence-layer-spi_PublisherService[`PublisherService`] or
+xref:../rgsvc/rgsvc.adoc#_rgsvc_persistence-layer-spi_PublishingService[`PublishingService`] (latter deprecated) is configured, they provide better traceability as the `Command` is also correlated with any published events, again through the unique `transactionId` GUID
+* if xref:../rgsvc/rgsvc.adoc#_rgsvc_spi_AuderService[`AuditerService`] or
+xref:../rgsvc/rgsvc.adoc#_rgsvc_spi_AuditService[`AuditingService`] (latter deprecated) is configured, they provide better audit information, since the `Command` (the 'cause' of an action) can be correlated to the audit records (the "effect" of the action) through the `transactionId` GUID
 
 However, while persistent ``Command``s _can_ be used for these use cases, it is recommended instead to use the xref:../rgsvc/rgsvc.adoc#_rgsvc_application-layer-api_InteractionContext[`InteractionContext`] service and persistent implementations of the ``Interaction`` object, eg as provided by the (non-ASF) link:http://platform.incode.org[Incode Platform^]'s publishmq module.
 
@@ -50,15 +46,20 @@ The `CommandService` service defines the following very simple API:
 ----
 public interface CommandService {
     Command create();                                               // <1>
-    boolean persistIfPossible(Command command);                     // <2>
-    void complete(Command command);                                 // <3>
+    @Deprecated
+    void startTransaction(Command command, UUID transactionId);     // <2>
+    boolean persistIfPossible(Command command);                     // <3>
+    void complete(Command command);                                 // <4>
 }
 ----
 <1> Instantiate the appropriate instance of the `Command` (as defined by the
 xref:../rgsvc/rgsvc.adoc#_rgsvc_application-layer-api_CommandContext[`CommandContext`] service).
 Its members will be populated automatically by the framework.
-<2> Set the hint that the `Command` should be persisted if possible (when completed, see below).
-<3> "Complete" the command, typically meaning that the command should be persisted it if its `Command#getPersistence()` flag and persistence hint (`Command#isPersistHint()`) indicate that it should be.  +
+<2> Deprecated and *IS NOT CALLED* by the framework.
+The framework automatically populates the ``Command``'s `timestamp`, `user` and `transactionId` fields, so there is no need for the service implementation to initialize any of these.
+In particular, the ``Command`` will already have been initialized with the provided `transactionId` argument.
+<3> Set the hint that the `Command` should be persisted if possible (when completed, see below).
+<4> "Complete" the command, typically meaning that the command should be persisted it if its `Command#getPersistence()` flag and persistence hint (`Command#isPersistHint()`) indicate that it should be.  +
 +
 The framework will automatically have set the `completedAt` property of the `Command`.
 
@@ -73,13 +74,11 @@ It further provides a number of supporting services:
 
 * `org.isisaddons.module.command.dom.CommandServiceJdoContributions` contributes actions for searching for persisted child and sibling ``Command``s.
 
-* implementation of the
-xref:../rgsvc/rgsvc.adoc#_rgsvc_application-layer-spi_CommandService[`BackgroundCommandService`].
 
-All of these can be activated by updating the `pom.xml` and updating the `AppManifest#getModules()` method.
 
-If contributions are not required in the UI, these can be suppressed either using security or by implementing a
-xref:../ugbtb/ugbtb.adoc#_ugbtb_hints-and-tips_vetoing-visibility[vetoing subscriber].
+== Usage
+
+The typical way to indicate that an action should be reified into a `Command` is by annotating the action using xref:../rgant/rgant.adoc#_rgant-Action_command[`@Action#command()`].
 
 
 
@@ -100,10 +99,10 @@ This is closely related to the xref:../rgsvc/rgsvc.adoc#_rgsvc_application-layer
 
 The implementations of `CommandService` and `BackgroundCommandService` are intended to go together, so that persistent parent `Command`s can be associated with their child background `Command`s.
 
-The services provided by this module combines very well with the xref:../rgsvc/rgsvc.adoc#_rgsvc_persistence-layer-spi_AuditerService[`AuditerService`].
-The `CommandService` captures the __cause__ of an interaction (an action was invoked, a property was edited), while the `AuditerService` captures the __effect__ of that interaction in terms of changed state.
+The services provided by this module combines very well with the xref:../rgsvc/rgsvc.adoc#_rgsvc_persistence-layer-spi_AuditingService[`AuditingService`].
+The `CommandService` captures the __cause__ of an interaction (an action was invoked, a property was edited), while the `AuditingService3` captures the __effect__ of that interaction in terms of changed state.
 
-You may also want to configure the xref:../rgsvc/rgsvc.adoc#_rgsvc_persistence-layer-spi_PublisherService[`PublisherService`].
+You may also want to configure the xref:../rgsvc/rgsvc.adoc#_rgsvc_persistence-layer-spi_PublishingService[`PublishingService`].
 
 All three of these services collaborate implicitly by way of the xref:../rgcms/rgcms.adoc#_rgcms_classes_mixins_HasTransactionId[`HasTransactionId`] interface.
 

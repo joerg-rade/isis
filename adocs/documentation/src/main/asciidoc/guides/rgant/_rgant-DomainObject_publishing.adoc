@@ -6,13 +6,8 @@
 
 
 
-The `publishing()` attribute determines whether and how a modified object instance is published via the registered
-implementation of
-xref:../rgsvc/rgsvc.adoc#_rgsvc_persistence-layer-spi_PublisherService[`PublisherService`].
-This attribute is also supported
-for xref:../rgant/rgant.adoc#_rgant-Action_publishing[actions], where it controls whether action invocations are published as
-events, and for xref:../rgant/rgant.adoc#_rgant-Property_publishing[`@Property#publishing()`], where it controls whether
-property edits are published as events.
+The `publishing()` attribute determines whether and how a modified object instance is published via the registered implementation of a xref:../rgsvc/rgsvc.adoc#_rgsvc_persistence-layer-spi_PublishingService[`PublishingService`]) or xref:../rgsvc/rgsvc.adoc#_rgsvc_persistence-layer-spi_PublisherService[`PublisherService`].
+This attribute is also supported for xref:../rgant/rgant.adoc#_rgant-Action_publishing[actions], where it controls whether action invocations are published as events, and for xref:../rgant/rgant.adoc#_rgant-Property_publishing[`@Property#publishing()`], where it controls whether property edits are published as events.
 
 A common use case is to notify external "downstream" systems of changes in the state of the Isis application.
 
@@ -26,7 +21,7 @@ all changed objects are published
 +
 no changed objects are published
 
-If there is no configuration property in `isis.properties` then publishing is automatically disabled for domain objects.
+If there is no configuration property in `isis.properties` then publishing is automatically enabled for domain objects.
 
 This default can be overridden on an object-by-object basis; if `publishing()` is set to `ENABLED` then changed instances of the domain class are published irrespective of the configured value; if set to `DISABLED` then the changed instances are _not_ published, again irrespective of the configured value.
 
@@ -46,3 +41,19 @@ public class InterestRate {
 
 
 
+== `publishingPayloadFactory()`
+
+The (optional) related `publishingPayloadFactory()` specifies the class to use to create the (payload of the) event to
+be published by the publishing factory.
+
+Rather than simply broadcast that the object was changed, the payload factory allows a "fatter" payload to be
+instantiated that can eagerly push commonly-required information to all subscribers. For at least some subscribers
+this should avoid the necessity to query back for additional information.
+
+
+[WARNING]
+====
+Be aware that this attribute is only honoured by the (deprecated)
+xref:../rgsvc/rgsvc.adoc#_rgsvc_persistence-layer-spi_PublishingService[`PublishingService`], so should itself be considered as deprecated.  It
+is ignored by the replacement xref:../rgsvc/rgsvc.adoc#_rgsvc_persistence-layer-spi_PublisherService[`PublisherService`],
+====
