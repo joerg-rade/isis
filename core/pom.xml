@@ -49,9 +49,6 @@
         <revision>1.0.0-SNAPSHOT</revision>
         <isis.version>${revision}</isis.version>
 
-        <isis.skipTests>false</isis.skipTests>
-        <maven.test.skip>${isis.skipTests}</maven.test.skip>
-
         <jar-plugin.automaticModuleName>org.apache.isis.core</jar-plugin.automaticModuleName>
         <git-plugin.propertiesDir>org/apache/isis/core</git-plugin.propertiesDir>
 
@@ -94,13 +91,20 @@
         <!-- Datanucleus Objectstore -->
         <jdo-api.version>3.1</jdo-api.version>
 
-        <!-- Isis Datanucleus JDO dn -->
         <datanucleus-core.version>4.1.7</datanucleus-core.version>
         <datanucleus-api-jdo.version>4.1.1</datanucleus-api-jdo.version>
         <datanucleus-jdo-query.version>4.0.5</datanucleus-jdo-query.version>
         <datanucleus-rdbms.version>4.1.9</datanucleus-rdbms.version>
 
         <datanucleus-jodatime.version>4.1.0-release</datanucleus-jodatime.version>
+	<!--
+	    ISIS-1288: seen integration tests to fail;
+	    domain object date holding 1-Aug-2015 after xactn retrieved as 31-Jul-2015
+
+        https://github.com/datanucleus/datanucleus-jodatime/commit/b85795a1bf5f92909a95d2c8f8822bba2ba38b5f
+
+        <datanucleus-jodatime.version>4.1.1</datanucleus-jodatime.version>
+	-->
         <datanucleus-maven-plugin.version>4.0.2</datanucleus-maven-plugin.version>
 
         <shiro.version>1.2.6</shiro.version>
@@ -112,10 +116,10 @@
         <guava.version>19.0</guava.version>
 
         <hamcrest.version>1.3</hamcrest.version>
+
         <assertj.version>3.6.2</assertj.version>
         <objenesis.version>2.4</objenesis.version>
         <javassist.version>3.20.0-GA</javassist.version>
-
         <reflections.version>0.9.10</reflections.version>
 
         <commons-logging.version>1.2</commons-logging.version>
@@ -123,7 +127,6 @@
         <commons-httpclient.version>3.1</commons-httpclient.version>
         <commons-codec.version>1.10</commons-codec.version>
         <commons-email.version>1.4</commons-email.version>
-        <commons-io.version>2.6</commons-io.version>
         <com-sun-mail.version>1.5.2</com-sun-mail.version>
 
         <axon-core.version>2.4.4</axon-core.version>
@@ -131,6 +134,7 @@
         <jackson.version>2.8.0</jackson.version>
         <gson.version>2.7</gson.version>
         <swagger-core.version>1.5.9</swagger-core.version>
+        <webjars-servlet-2.x.version>1.5</webjars-servlet-2.x.version>
 
         <hsqldb.version>2.3.4</hsqldb.version>
         <log4jdbc-remix.version>0.2.7</log4jdbc-remix.version>
@@ -140,11 +144,10 @@
 
         <wicket.version>7.9.0</wicket.version>
         <wicketstuff.version>7.8.1</wicketstuff.version>
-        <wicket-bootstrap.version>0.10.16</wicket-bootstrap.version>
-        <wicket-source.version>7.0.0</wicket-source.version>
 
         <wicket-webjars.version>0.5.4</wicket-webjars.version>
-        <webjars-servlet-2.x.version>1.5</webjars-servlet-2.x.version>
+        <wicket-bootstrap.version>0.10.16</wicket-bootstrap.version>
+        <wicket-source.version>7.0.0</wicket-source.version>
 
         <select2.version>4.0.3</select2.version>
 
@@ -209,16 +212,6 @@
     </mailingLists>
 
     <developers>
-    	<developer>
-            <id>ahuber</id>
-            <name>Andi Huber</name>
-            <email>ahuber@apache.org</email>
-            <roles>
-                <role>pmc</role>
-                <role>committer</role>
-            </roles>
-            <timezone>+1</timezone>
-        </developer>
         <developer>
             <id>danhaywood</id>
             <name>Dan Haywood</name>
@@ -395,6 +388,13 @@
                 <enabled>true</enabled>
             </snapshots>
         </repository>
+        <repository>
+            <id>datanucleus-nightly</id>
+            <url>http://www.datanucleus.org/downloads/maven2-nightly/</url>
+            <snapshots>
+              <enabled>true</enabled>
+            </snapshots>
+        </repository>
 
         <!-- required for RestEasy -->
         <repository>
@@ -480,7 +480,7 @@
                             <exclude>**/*.svg</exclude>
                             <exclude>**/*.json</exclude>
                             <exclude>**/*.min.js</exclude>
-
+                            
                             <exclude>**/MANIFEST.MF</exclude>
                             <exclude>**/*.ucd</exclude>
                             <exclude>**/*.ucls</exclude>
@@ -488,7 +488,7 @@
                             <exclude>**/xml/objects/**</exclude>
                             <exclude>**/test.data</exclude>
                             <exclude>**/fixture-data/**</exclude>
-
+                            
                             <exclude>**/application.js</exclude>
 
                             <exclude>**/jquery.zclip.js</exclude>
@@ -498,9 +498,9 @@
                             <exclude>**/bootstrap-datetimepicker.min.css</exclude>
                             <exclude>**/bootstrap-datetimepicker.css</exclude>
                             <exclude>**/select2-bootstrap.css</exclude>
-
+                            
                             <exclude>**/wicket-xhtml1.4-strict.dtd</exclude>
-
+                            
                             <exclude>**/src/main/appended-resources/supplemental-models.xml</exclude>
                             <exclude>**/datanucleus.log</exclude>
                             <exclude>**/gradle/wrapper/gradle-wrapper.properties</exclude>
@@ -594,6 +594,7 @@
                     <!-- goal:compile binds to phase:compile -->
                     <!-- goal:testCompile binds to phase:test-compile -->
                 </plugin>
+
                 
                 <!-- Tests (ignore integration tests)-->
                 <plugin>
@@ -601,6 +602,14 @@
                     <artifactId>maven-surefire-plugin</artifactId>
                     <version>2.16</version>
                     <configuration>
+                    <!-- 
+                        <includes>
+                            <include>**/Test*.java</include>
+                            <include>**/*Test.java</include>
+                            <include>**/*TestCase.java</include>
+                            <include>**/*Test_*.java</include>
+                        </includes>
+                     -->
                         <excludes>
                             <exclude>${testsToExclude}</exclude>
                         </excludes>
@@ -845,7 +854,7 @@
 								no requirement as of yet.
                                 <Bundle-ManifestVersion>2</Bundle-ManifestVersion>
                                 <Bundle-Name>${jar-plugin.automaticModuleName}</Bundle-Name>
-                                <Bundle-Version>${isis.version}</Bundle-Version>
+                                <Bundle-Version>${revision}</Bundle-Version>
                                 <Bundle-Vendor>Apache Isis™ Project</Bundle-Vendor>
 								-->
                             </manifestEntries>
@@ -1130,6 +1139,36 @@ ${license.additional-notes}
                     <skip>false</skip>
                 </configuration>
             </plugin>
+
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>flatten-maven-plugin</artifactId>
+                <version>1.0.0</version>
+                <configuration>
+                    <updatePomFile>true</updatePomFile>
+                    <pomElements>
+                        <dependencyManagement>resolve</dependencyManagement>
+                        <dependencies>resolve</dependencies>
+                    </pomElements>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>flatten</id>
+                        <phase>process-resources</phase>
+                        <goals>
+                            <goal>flatten</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>flatten.clean</id>
+                        <phase>clean</phase>
+                        <goals>
+                            <goal>clean</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
         </plugins>
     </build>
 
@@ -1142,12 +1181,12 @@ ${license.additional-notes}
             <dependency>
                 <groupId>org.apache.isis.core</groupId>
                 <artifactId>isis-core-unittestsupport</artifactId>
-                <version>${isis.version}</version>
+                <version>${revision}</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.isis.core</groupId>
                 <artifactId>isis-core-unittestsupport</artifactId>
-                <version>${isis.version}</version>
+                <version>${revision}</version>
                 <type>test-jar</type>
                 <scope>test</scope>
             </dependency>
@@ -1156,14 +1195,14 @@ ${license.additional-notes}
             <dependency>
                 <groupId>org.apache.isis.core</groupId>
                 <artifactId>isis-core-applib</artifactId>
-                <version>${isis.version}</version>
+                <version>${revision}</version>
                 <type>jar</type>
                 <scope>compile</scope>
             </dependency>
             <dependency>
                 <groupId>org.apache.isis.core</groupId>
                 <artifactId>isis-core-applib</artifactId>
-                <version>${isis.version}</version>
+                <version>${revision}</version>
                 <type>test-jar</type>
                 <scope>test</scope>
             </dependency>
@@ -1172,14 +1211,14 @@ ${license.additional-notes}
             <dependency>
                 <groupId>org.apache.isis.core</groupId>
                 <artifactId>isis-core-schema</artifactId>
-                <version>${isis.version}</version>
+                <version>${revision}</version>
                 <type>jar</type>
                 <scope>compile</scope>
             </dependency>
             <dependency>
                 <groupId>org.apache.isis.core</groupId>
                 <artifactId>isis-core-schema</artifactId>
-                <version>${isis.version}</version>
+                <version>${revision}</version>
                 <type>test-jar</type>
                 <scope>test</scope>
             </dependency>
@@ -1188,7 +1227,7 @@ ${license.additional-notes}
             <dependency>
                 <groupId>org.apache.isis.core</groupId>
                 <artifactId>isis-core-log4j</artifactId>
-                <version>${isis.version}</version>
+                <version>${revision}</version>
                 <type>jar</type>
                 <scope>compile</scope>
             </dependency>
@@ -1197,14 +1236,14 @@ ${license.additional-notes}
             <dependency>
                 <groupId>org.apache.isis.core</groupId>
                 <artifactId>isis-core-metamodel</artifactId>
-                <version>${isis.version}</version>
+                <version>${revision}</version>
                 <type>jar</type>
                 <scope>compile</scope>
             </dependency>
             <dependency>
                 <groupId>org.apache.isis.core</groupId>
                 <artifactId>isis-core-metamodel</artifactId>
-                <version>${isis.version}</version>
+                <version>${revision}</version>
                 <type>test-jar</type>
                 <scope>test</scope>
             </dependency>
@@ -1213,76 +1252,76 @@ ${license.additional-notes}
             <dependency>
                 <groupId>org.apache.isis.core</groupId>
                 <artifactId>isis-core-runtime</artifactId>
-                <version>${isis.version}</version>
+                <version>${revision}</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.isis.core</groupId>
                 <artifactId>isis-core-runtime</artifactId>
-                <version>${isis.version}</version>
+                <version>${revision}</version>
                 <type>test-jar</type>
                 <scope>test</scope>
             </dependency>
             <dependency>
                 <groupId>org.apache.isis.core</groupId>
                 <artifactId>isis-core-wrapper</artifactId>
-                <version>${isis.version}</version>
+                <version>${revision}</version>
             </dependency>
 
             <!-- webserver -->
             <dependency>
                 <groupId>org.apache.isis.core</groupId>
                 <artifactId>isis-core-webserver</artifactId>
-                <version>${isis.version}</version>
+                <version>${revision}</version>
             </dependency>
 
             <!-- specsupport -->
             <dependency>
                 <groupId>org.apache.isis.core</groupId>
                 <artifactId>isis-core-specsupport</artifactId>
-                <version>${isis.version}</version>
+                <version>${revision}</version>
             </dependency>
 
             <!-- integtestsupport -->
             <dependency>
                 <groupId>org.apache.isis.core</groupId>
                 <artifactId>isis-core-integtestsupport</artifactId>
-                <version>${isis.version}</version>
+                <version>${revision}</version>
             </dependency>
 
             <!-- Restful Objects viewer -->
             <dependency>
                 <groupId>org.apache.isis.core</groupId>
                 <artifactId>isis-core-viewer-restfulobjects-applib</artifactId>
-                <version>${isis.version}</version>
+                <version>${revision}</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.isis.core</groupId>
                 <artifactId>isis-core-viewer-restfulobjects-applib</artifactId>
-                <version>${isis.version}</version>
+                <version>${revision}</version>
                 <type>test-jar</type>
                 <scope>test</scope>
             </dependency>
             <dependency>
                 <groupId>org.apache.isis.core</groupId>
                 <artifactId>isis-core-viewer-restfulobjects-rendering</artifactId>
-                <version>${isis.version}</version>
+                <version>${revision}</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.isis.core</groupId>
                 <artifactId>isis-core-viewer-restfulobjects-rendering</artifactId>
-                <version>${isis.version}</version>
+                <version>${revision}</version>
                 <type>test-jar</type>
                 <scope>test</scope>
             </dependency>
             <dependency>
                 <groupId>org.apache.isis.core</groupId>
                 <artifactId>isis-core-viewer-restfulobjects-server</artifactId>
-                <version>${isis.version}</version>
+                <version>${revision}</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.isis.core</groupId>
                 <artifactId>isis-core-viewer-restfulobjects-server</artifactId>
-                <version>${isis.version}</version>
+                <version>${revision}</version>
                 <type>test-jar</type>
                 <scope>test</scope>
             </dependency>
@@ -1291,12 +1330,12 @@ ${license.additional-notes}
             <dependency>
                 <groupId>org.apache.isis.core</groupId>
                 <artifactId>isis-core-security</artifactId>
-                <version>${isis.version}</version>
+                <version>${revision}</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.isis.core</groupId>
                 <artifactId>isis-core-security-shiro</artifactId>
-                <version>${isis.version}</version>
+                <version>${revision}</version>
             </dependency>
 
             
@@ -1304,41 +1343,41 @@ ${license.additional-notes}
             <dependency>
                 <groupId>org.apache.isis.core</groupId>
                 <artifactId>isis-core-viewer-wicket-applib</artifactId>
-                <version>${isis.version}</version>
+                <version>${revision}</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.isis.core</groupId>
                 <artifactId>isis-core-viewer-wicket-model</artifactId>
-                <version>${isis.version}</version>
+                <version>${revision}</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.isis.core</groupId>
                 <artifactId>isis-core-viewer-wicket-model</artifactId>
-                <version>${isis.version}</version>
+                <version>${revision}</version>
                 <scope>test</scope>
                 <type>test-jar</type>
             </dependency>
             <dependency>
                 <groupId>org.apache.isis.core</groupId>
                 <artifactId>isis-core-viewer-wicket-ui</artifactId>
-                <version>${isis.version}</version>
+                <version>${revision}</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.isis.core</groupId>
                 <artifactId>isis-core-viewer-wicket-ui</artifactId>
-                <version>${isis.version}</version>
+                <version>${revision}</version>
                 <scope>test</scope>
                 <type>test-jar</type>
             </dependency>
             <dependency>
                 <groupId>org.apache.isis.core</groupId>
                 <artifactId>isis-core-viewer-wicket-impl</artifactId>
-                <version>${isis.version}</version>
+                <version>${revision}</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.isis.core</groupId>
                 <artifactId>isis-core-viewer-wicket-impl</artifactId>
-                <version>${isis.version}</version>
+                <version>${revision}</version>
                 <scope>test</scope>
                 <type>test-jar</type>
             </dependency>
@@ -1347,26 +1386,26 @@ ${license.additional-notes}
             <dependency>
                 <groupId>org.apache.isis.tool</groupId>
                 <artifactId>isis-maven-plugin</artifactId>
-                <version>${isis.version}</version>
+                <version>${revision}</version>
             </dependency>
 
             <!-- Maven dependencies -->
             <dependency>
                 <groupId>org.apache.isis.mavendeps</groupId>
                 <artifactId>isis-mavendeps-intellij</artifactId>
-                <version>${isis.version}</version>
+                <version>${revision}</version>
                 <type>pom</type>
             </dependency>
             <dependency>
                 <groupId>org.apache.isis.mavendeps</groupId>
                 <artifactId>isis-mavendeps-testing</artifactId>
-                <version>${isis.version}</version>
+                <version>${revision}</version>
                 <type>pom</type>
             </dependency>
             <dependency>
                 <groupId>org.apache.isis.mavendeps</groupId>
                 <artifactId>isis-mavendeps-webapp</artifactId>
-                <version>${isis.version}</version>
+                <version>${revision}</version>
                 <type>pom</type>
             </dependency>
 
@@ -1439,11 +1478,6 @@ ${license.additional-notes}
                 <groupId>commons-codec</groupId>
                 <artifactId>commons-codec</artifactId>
                 <version>${commons-codec.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>commons-io</groupId>
-                <artifactId>commons-io</artifactId>
-                <version>${commons-io.version}</version>
             </dependency>
 
             <!-- Dependency injection -->
@@ -1902,10 +1936,9 @@ ${license.additional-notes}
                 <artifactId>jetty-webapp</artifactId>
                 <version>${jetty.version}</version>
             </dependency>
+            
 
-
-            <!-- TESTING LIBRARIES (not scope=test because used by isis-core-integtest) -->
-
+            <!-- Testing libraries (not scope=test because used by isis-core-integtest) -->
             <dependency>
                 <groupId>junit</groupId>
                 <artifactId>junit</artifactId>
@@ -2091,13 +2124,13 @@ ${license.additional-notes}
 
         <!-- TEST DEPENDENCIES -->
         <dependency>
-            <groupId>org.jmock</groupId>
-            <artifactId>jmock-junit4</artifactId>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
+            <groupId>org.jmock</groupId>
+            <artifactId>jmock-junit4</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -2107,9 +2140,10 @@ ${license.additional-notes}
         </dependency>
     </dependencies>
 
-	<profiles>
+    <profiles>
+
         <profile>
-            <id>apache-release</id>
+            <id>jdk7</id>
             <build>
                 <plugins>
                     <plugin>
@@ -2136,7 +2170,7 @@ ${license.additional-notes}
             </build>
         </profile>
         <profile>
-            <id>jdk7</id>
+            <id>apache-release</id>
             <build>
                 <plugins>
                     <plugin>
@@ -2214,7 +2248,6 @@ ${license.additional-notes}
                 </plugins>
             </build>
         </profile>
-
         <profile>
 
             <!--
@@ -2277,7 +2310,6 @@ ${license.additional-notes}
                 </repository>
             </distributionManagement>
         </profile>
-
         <profile>
             <id>owasp</id>
             <activation>
@@ -2333,29 +2365,11 @@ ${license.additional-notes}
                 </plugins>
             </build>
         </profile>
-
-        <profile>
-            <id>src</id>
-            <activation>
-                <property>
-                    <name>!skip.src</name>
-                </property>
-            </activation>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-source-plugin</artifactId>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-
         <profile>
             <id>git</id>
             <activation>
                 <property>
-                    <name>git</name>
+                    <name>!skip.git</name>
                 </property>
             </activation>
             <build>
@@ -2363,86 +2377,6 @@ ${license.additional-notes}
                     <plugin>
                         <groupId>pl.project13.maven</groupId>
                         <artifactId>git-commit-id-plugin</artifactId>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-        <profile>
-            <id>flatten</id>
-            <activation>
-                <property>
-                    <name>!skip.flatten</name>
-                </property>
-            </activation>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.codehaus.mojo</groupId>
-                        <artifactId>flatten-maven-plugin</artifactId>
-                        <version>1.0.0</version>
-                        <executions>
-                            <execution>
-                                <id>flatten</id>
-                                <phase>process-resources</phase>
-                                <goals>
-                                    <goal>flatten</goal>
-                                </goals>
-                                <configuration>
-                                    <flattenMode>bom</flattenMode>
-                                    <updatePomFile>true</updatePomFile>
-                                    <pomElements>
-                                        <parent>resolve</parent>
-                                    </pomElements>
-                                </configuration>
-                            </execution>
-                            <execution>
-                                <id>flatten.clean</id>
-                                <phase>clean</phase>
-                                <goals>
-                                    <goal>clean</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-
-        <profile>
-            <!--
-            as per https://stackoverflow.com/a/28860520/56880
-            allows -Dgpg.passphrase= to be used rather than gpg.useagent
-            inherited from parent.
-            Note that this requires gpg v2.1+
-            -->
-            <id>gpg</id>
-            <activation>
-                <property>
-                    <name>gpg.passphrase</name>
-                </property>
-            </activation>
-            <properties>
-                <gpg.useagent>false</gpg.useagent>
-            </properties>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-gpg-plugin</artifactId>
-                        <executions>
-                            <execution>
-                                <id>sign-release-artifacts</id>
-                                <goals>
-                                    <goal>sign</goal>
-                                </goals>
-                                <configuration>
-                                    <gpgArguments>
-                                        <arg>--pinentry-mode</arg>
-                                        <arg>loopback</arg>
-                                    </gpgArguments>
-                                </configuration>
-                            </execution>
-                        </executions>
                     </plugin>
                 </plugins>
             </build>
@@ -2479,8 +2413,6 @@ ${license.additional-notes}
         <module>mavendeps/intellij</module>
         <module>mavendeps/webapp</module>
         <module>mavendeps/testing</module>
-
-        <module>webdocker</module>
     </modules>
 
 </project>
