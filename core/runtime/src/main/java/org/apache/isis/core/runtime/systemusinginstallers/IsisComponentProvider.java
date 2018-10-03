@@ -25,20 +25,34 @@ import java.util.Map;
 import java.util.Set;
 
 import javax.annotation.Nullable;
+import javax.jdo.annotations.PersistenceCapable;
+import javax.xml.bind.annotation.XmlElement;
+
+import com.google.common.base.Function;
+import com.google.common.base.Joiner;
+import com.google.common.base.Predicate;
+import com.google.common.collect.FluentIterable;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
+
+import org.reflections.Reflections;
+import org.reflections.vfs.Vfs;
 
 import org.apache.isis.applib.AppManifest;
 import org.apache.isis.applib.annotation.DomainObject;
 import org.apache.isis.applib.annotation.DomainService;
 import org.apache.isis.applib.annotation.Mixin;
 import org.apache.isis.applib.annotation.Nature;
+import org.apache.isis.applib.annotation.ViewModel;
 import org.apache.isis.applib.fixturescripts.FixtureScript;
-import org.apache.isis.applib.internal.discover._Discover;
-import org.apache.isis.applib.plugins.classdiscovery.ClassDiscovery;
+import org.apache.isis.applib.services.classdiscovery.ClassDiscoveryServiceUsingReflections;
 import org.apache.isis.core.commons.config.IsisConfiguration;
 import org.apache.isis.core.commons.config.IsisConfigurationDefault;
 import org.apache.isis.core.commons.factory.InstanceUtil;
-import org.apache.isis.core.commons.lang.ClassFunctions;
+import org.apache.isis.core.commons.lang.ClassUtil;
 import org.apache.isis.core.metamodel.facetapi.MetaModelRefiner;
+import org.apache.isis.core.metamodel.layoutmetadata.LayoutMetadataReader;
 import org.apache.isis.core.metamodel.progmodel.ProgrammingModel;
 import org.apache.isis.core.metamodel.services.ServicesInjector;
 import org.apache.isis.core.metamodel.specloader.ReflectorConstants;
@@ -56,19 +70,12 @@ import org.apache.isis.objectstore.jdo.service.RegisterEntities;
 import org.apache.isis.progmodels.dflt.JavaReflectorHelper;
 import org.apache.isis.progmodels.dflt.ProgrammingModelFacetsJava5;
 
-import com.google.common.base.Function;
-import com.google.common.base.Joiner;
-import com.google.common.collect.FluentIterable;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
-
 /**
  * 
  */
 public abstract class IsisComponentProvider {
 
-    // -- constructor, fields
+    //region > constructor, fields
 
     private final AppManifest appManifest;
     private final IsisConfigurationDefault configuration;
@@ -112,9 +119,9 @@ public abstract class IsisComponentProvider {
         return configuration;
     }
 
-    
+    //endregion
 
-    // -- helpers (appManifest)
+    //region > helpers (appManifest)
 
     private void putAppManifestKey(final AppManifest appManifest) {
         // required to prevent RegisterEntities validation from complaining
@@ -133,23 +140,32 @@ public abstract class IsisComponentProvider {
         moduleAndFrameworkPackages.addAll(AppManifest.Registry.FRAMEWORK_PROVIDED_SERVICES);
         Iterables.addAll(moduleAndFrameworkPackages, modulePackages);
 
-        final ClassDiscovery discovery = _Discover.discover(moduleAndFrameworkPackages);
+        Vfs.setDefaultURLTypes(ClassDiscoveryServiceUsingReflections.getUrlTypes());
 
-        final Set<Class<?>> domainServiceTypes = discovery.getTypesAnnotatedWith(DomainService.class);
-        final Set<Class<?>> persistenceCapableTypes = PersistenceCapableTypeFinder.find(discovery);
-        final Set<Class<? extends FixtureScript>> fixtureScriptTypes = discovery.getSubTypesOf(FixtureScript.class);
+        final Reflections reflections = new Reflections(moduleAndFrameworkPackages);
+
+        final Set<Class<?>> domainServiceTypes = reflections.getTypesAnnotatedWith(DomainService.class);
+        final Set<Class<?>> persistenceCapableTypes = reflections.getTypesAnnotatedWith(PersistenceCapable.class);
+        final Set<Class<? extends FixtureScript>> fixtureScriptTypes = reflections.getSubTypesOf(FixtureScript.class);
 
         final Set<Class<?>> mixinTypes = Sets.newHashSet();
-        mixinTypes.addAll(discovery.getTypesAnnotatedWith(Mixin.class));
+        mixinTypes.addAll(reflections.getTypesAnnotatedWith(Mixin.class));
 
-        final Set<Class<?>> domainObjectTypes = discovery.getTypesAnnotatedWith(DomainObject.class);
-        domainObjectTypes.stream()
-        .filter(input -> {
-            final DomainObject annotation = input.getAnnotation(DomainObject.class);
-            return annotation.nature() == Nature.MIXIN;
-        })
-        .forEach(mixinTypes::add);
-        
+        final Set<Class<?>> domainObjectTypes = reflections.getTypesAnnotatedWith(DomainObject.class);
+        mixinTypes.addAll(
+                Lists.newArrayList(Iterables.filter(domainObjectTypes, new Predicate<Class<?>>() {
+                    @Override
+                    public boolean apply(@Nullable final Class<?> input) {
+                        if(input == null) { return false; }
+                        final DomainObject annotation = input.getAnnotation(DomainObject.class);
+                        return annotation.nature() == Nature.MIXIN;
+                    }
+                }))
+        );
+
+        final Set<Class<?>> viewModelTypes = reflections.getTypesAnnotatedWith(ViewModel.class);
+        final Set<Class<?>> xmlElementTypes = reflections.getTypesAnnotatedWith(XmlElement.class);
+
         // add in any explicitly registered services...
         domainServiceTypes.addAll(appManifest.getAdditionalServices());
 
@@ -171,7 +187,9 @@ public abstract class IsisComponentProvider {
         registry.setPersistenceCapableTypes(within(packagesWithDotSuffix, persistenceCapableTypes));
         registry.setFixtureScriptTypes(within(packagesWithDotSuffix, fixtureScriptTypes));
         registry.setMixinTypes(within(packagesWithDotSuffix, mixinTypes));
-
+        registry.setDomainObjectTypes(within(packagesWithDotSuffix, domainObjectTypes));
+        registry.setViewModelTypes(within(packagesWithDotSuffix, viewModelTypes));
+        registry.setXmlElementTypes(within(packagesWithDotSuffix, xmlElementTypes));
     }
 
     static <T> Set<Class<? extends T>> within(
@@ -188,7 +206,7 @@ public abstract class IsisComponentProvider {
     }
     static private boolean containedWithin(final List<String> packagesWithDotSuffix, final String className) {
         for (String packageWithDotSuffix : packagesWithDotSuffix) {
-            if (className.startsWith(packageWithDotSuffix)) {
+            if(className.startsWith(packageWithDotSuffix)) {
                 return true;
             }
         }
@@ -232,7 +250,7 @@ public abstract class IsisComponentProvider {
                     "If an appManifest is provided then it must return a non-empty set of modules");
         }
 
-        return Iterables.transform(modules, ClassFunctions.packageNameOf());
+        return Iterables.transform(modules, ClassUtil.Functions.packageNameOf());
     }
 
     protected String classNamesFrom(final List<?> objectsOrClasses) {
@@ -282,9 +300,9 @@ public abstract class IsisComponentProvider {
         this.configuration.add(key, value);
     }
 
-    
+    //endregion
 
-    // -- provideAuth*
+    //region > provideAuth*
 
     public AuthenticationManager provideAuthenticationManager() {
         return authenticationManager;
@@ -294,17 +312,17 @@ public abstract class IsisComponentProvider {
         return authorizationManager;
     }
 
-    
+    //endregion
 
-    // -- provideServiceInjector
+    //region > provideServiceInjector
 
     public ServicesInjector provideServiceInjector(final IsisConfiguration configuration) {
         return new ServicesInjector(services, configuration);
     }
 
-    
+    //endregion
 
-    // -- provideSpecificationLoader
+    //region > provideSpecificationLoader
 
     public SpecificationLoader provideSpecificationLoader(
             final ServicesInjector servicesInjector,
@@ -314,9 +332,11 @@ public abstract class IsisComponentProvider {
 
         final MetaModelValidator mmv = createMetaModelValidator();
 
+        final List<LayoutMetadataReader> layoutMetadataReaders = createLayoutMetadataReaders();
+
         return JavaReflectorHelper.createObjectReflector(
                 configuration, programmingModel, metaModelRefiners,
-                mmv,
+                layoutMetadataReaders, mmv,
                 servicesInjector);
     }
 
@@ -336,8 +356,24 @@ public abstract class IsisComponentProvider {
         return programmingModel;
     }
 
+    protected List<LayoutMetadataReader> createLayoutMetadataReaders() {
+        final List<LayoutMetadataReader> layoutMetadataReaders = Lists.newArrayList();
+        final String[] layoutMetadataReaderClassNames =
+                configuration.getList(
+                        ReflectorConstants.LAYOUT_METADATA_READER_LIST,
+                        ReflectorConstants.LAYOUT_METADATA_READER_LIST_DEFAULT);
+
+        if (layoutMetadataReaderClassNames != null) {
+            for (final String layoutMetadataReaderClassName : layoutMetadataReaderClassNames) {
+                final LayoutMetadataReader layoutMetadataReader =
+                        InstanceUtil.createInstance(layoutMetadataReaderClassName, LayoutMetadataReader.class);
+                layoutMetadataReaders.add(layoutMetadataReader);
+            }
+        }
+        return layoutMetadataReaders;
+    }
 
 
-    
+    //endregion
 
 }
