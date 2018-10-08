@@ -19,7 +19,7 @@
 
 package org.apache.isis.core.metamodel.facets.actions.layout;
 
-import java.util.List;
+import java.util.Map;
 
 import org.apache.isis.applib.annotation.ActionLayout;
 import org.apache.isis.applib.annotation.PromptStyle;
@@ -29,6 +29,7 @@ import org.apache.isis.core.metamodel.facets.object.promptStyle.PromptStyleConfi
 import org.apache.isis.core.metamodel.facets.object.promptStyle.PromptStyleFacet;
 import org.apache.isis.core.metamodel.facets.object.promptStyle.PromptStyleFacetAbstract;
 import org.apache.isis.core.metamodel.facets.object.promptStyle.PromptStyleFacetAsConfigured;
+import org.apache.isis.core.metamodel.facets.object.promptStyle.PromptStyleFacetFallBackToInline;
 
 public class PromptStyleFacetForActionLayoutAnnotation extends PromptStyleFacetAbstract {
 
@@ -40,46 +41,48 @@ public class PromptStyleFacetForActionLayoutAnnotation extends PromptStyleFacetA
     }
 
     public static PromptStyleFacet create(
-            final List<ActionLayout> actionLayouts,
+            final ActionLayout actionLayout,
             final IsisConfiguration configuration,
             final FacetHolder holder) {
 
-        return actionLayouts.stream()
-                .map(ActionLayout::promptStyle)
-                .filter(promptStyle -> promptStyle != PromptStyle.NOT_SPECIFIED)
-                .findFirst()
-                .map(promptStyle -> {
+        PromptStyle promptStyle = actionLayout != null? actionLayout.promptStyle() : null;
 
-                    switch (promptStyle) {
-                    case DIALOG:
-                    case INLINE:
-                    case INLINE_AS_IF_EDIT:
-                        return new PromptStyleFacetForActionLayoutAnnotation(promptStyle, holder);
+        if(promptStyle == null) {
+            if (holder.containsDoOpNotDerivedFacet(PromptStyleFacet.class)) {
+                // do not replace
+                return null;
+            }
 
-                    case AS_CONFIGURED:
+            return new PromptStyleFacetFallBackToInline(holder);
+        } else {
 
-                        // do not replace
-                        if (holder.containsDoOpFacet(PromptStyleFacet.class)) {
-                            return null;
-                        }
+            switch (promptStyle) {
+                case DIALOG:
+                case INLINE:
+                case INLINE_AS_IF_EDIT:
+                    return new PromptStyleFacetForActionLayoutAnnotation(promptStyle, holder);
 
-                        promptStyle = PromptStyleConfiguration.parse(configuration);
-                        return new PromptStyleFacetAsConfigured(promptStyle, holder);
+                case AS_CONFIGURED:
 
-
-                    }
-                    throw new IllegalStateException("promptStyle '" + promptStyle + "' not recognised");
-                })
-                .orElseGet(() -> {
                     // do not replace
-                        if (holder.containsDoOpFacet(PromptStyleFacet.class)) {
-                            return null;
-                        }
-
-                        PromptStyle promptStyle = PromptStyleConfiguration.parse(configuration);
-                        return new PromptStyleFacetAsConfigured(promptStyle, holder);
+                    if (holder.containsDoOpFacet(PromptStyleFacet.class)) {
+                        return null;
                     }
-                );
+
+                    promptStyle = PromptStyleConfiguration.parse(configuration);
+                    return new PromptStyleFacetAsConfigured(promptStyle, holder);
+
+                default:
+
+                    // do not replace
+                    if (holder.containsDoOpFacet(PromptStyleFacet.class)) {
+                        return null;
+                    }
+
+                    promptStyle = PromptStyleConfiguration.parse(configuration);
+                    return new PromptStyleFacetAsConfigured(promptStyle, holder);
+            }
+        }
 
     }
 
@@ -87,4 +90,10 @@ public class PromptStyleFacetForActionLayoutAnnotation extends PromptStyleFacetA
     public PromptStyle value() {
         return promptStyle;
     }
+
+    @Override public void appendAttributesTo(final Map<String, Object> attributeMap) {
+        super.appendAttributesTo(attributeMap);
+        attributeMap.put("promptStyle", promptStyle);
+    }
+
 }

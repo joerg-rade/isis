@@ -19,48 +19,48 @@
 
 package org.apache.isis.core.metamodel.facets.actions.notcontributed;
 
-import org.apache.isis.applib.annotation.Contributed;
+import java.util.Map;
+
+import org.apache.isis.applib.annotation.NotContributed.As;
 import org.apache.isis.core.metamodel.facetapi.Facet;
 import org.apache.isis.core.metamodel.facetapi.FacetAbstract;
 import org.apache.isis.core.metamodel.facetapi.FacetHolder;
 
 public abstract class NotContributedFacetAbstract extends FacetAbstract implements NotContributedFacet {
 
-    private final Contributed contributed;
+    private final As as;
 
     public static Class<? extends Facet> type() {
         return NotContributedFacet.class;
     }
 
-    public NotContributedFacetAbstract(
-            final Contributed contributed,
-            final FacetHolder holder) {
-        this(contributed, holder, Derivation.NOT_DERIVED);
+    public NotContributedFacetAbstract(final As as, final FacetHolder holder) {
+        this(as, holder, Derivation.NOT_DERIVED);
     }
 
-    public NotContributedFacetAbstract(
-            final Contributed contributed,
-            final FacetHolder holder,
-            final Derivation derivation) {
+    public NotContributedFacetAbstract(final As as, final FacetHolder holder, final Derivation derivation) {
         super(type(), holder, derivation);
-        this.contributed = contributed;
+        this.as = as;
     }
 
     @Override
-    public Contributed contributed() {
-        return contributed;
+    public As value() {
+        return as;
     }
 
     @Override
     public boolean toActions() {
-        // not contributed to actions if...
-        return contributed() == Contributed.AS_NEITHER || contributed() == Contributed.AS_ASSOCIATION;
+        return value() == As.EITHER || value() == As.ACTION;
     }
 
     @Override
     public boolean toAssociations() {
-        // not contributed to associations if...
-        return contributed() == Contributed.AS_NEITHER || contributed() == Contributed.AS_ACTION;
+        return value() == As.EITHER || value() == As.ASSOCIATION;
+    }
+
+    @Override public void appendAttributesTo(final Map<String, Object> attributeMap) {
+        super.appendAttributesTo(attributeMap);
+        attributeMap.put("as", as);
     }
 
 }

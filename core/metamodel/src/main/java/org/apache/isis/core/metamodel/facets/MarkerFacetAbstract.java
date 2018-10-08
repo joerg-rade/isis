@@ -19,14 +19,35 @@
 
 package org.apache.isis.core.metamodel.facets;
 
+import java.util.Map;
+
+import org.apache.isis.applib.annotation.When;
 import org.apache.isis.core.metamodel.facetapi.Facet;
 import org.apache.isis.core.metamodel.facetapi.FacetAbstract;
 import org.apache.isis.core.metamodel.facetapi.FacetHolder;
 
-public abstract class MarkerFacetAbstract extends FacetAbstract implements MarkerFacet {
+public abstract class WhenValueFacetAbstract extends FacetAbstract implements WhenValueFacet {
+    private final When when;
 
-    public MarkerFacetAbstract(final Class<? extends Facet> facetType, final FacetHolder holder) {
+    public WhenValueFacetAbstract(final Class<? extends Facet> facetType, final FacetHolder holder, final When when) {
         super(facetType, holder, Derivation.NOT_DERIVED);
+        this.when = when;
+    }
+
+    @Override
+    public When when() {
+        return when;
+    }
+
+    @Override
+    protected String toStringValues() {
+        return "when=" + when.getFriendlyName();
+    }
+
+    @Override
+    public void appendAttributesTo(final Map<String, Object> attributeMap) {
+        super.appendAttributesTo(attributeMap);
+        attributeMap.put("when", when.name());
     }
 
 }

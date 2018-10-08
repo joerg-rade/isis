@@ -19,7 +19,7 @@
 
 package org.apache.isis.core.metamodel.facets.object.domainobjectlayout;
 
-import java.util.List;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,28 +42,27 @@ public class IconFacetViaDomainObjectLayoutAnnotationUsingIconUiEvent extends Ic
     private static final Logger LOG = LoggerFactory.getLogger(IconFacetViaDomainObjectLayoutAnnotationUsingIconUiEvent.class);
 
     public static Facet create(
-            final List<DomainObjectLayout> domainObjectLayouts,
+            final DomainObjectLayout domainObjectLayout,
             final ServicesInjector servicesInjector,
-            final IsisConfiguration configuration,
-            final FacetHolder facetHolder) {
+            final IsisConfiguration configuration, final FacetHolder facetHolder) {
+        if(domainObjectLayout == null) {
+            return null;
+        }
+        final Class<? extends IconUiEvent<?>> iconUiEventClass = domainObjectLayout.iconUiEvent();
 
-        return domainObjectLayouts.stream()
-                .map(DomainObjectLayout::iconUiEvent)
-                .filter(iconUiEvent -> EventUtil.eventTypeIsPostable(
-                        iconUiEvent,
-                        IconUiEvent.Noop.class,
-                        IconUiEvent.Default.class,
-                        "isis.reflector.facet.domainObjectLayoutAnnotation.iconUiEvent.postForDefault",
-                        configuration))
-                .findFirst()
-                .map(iconUiEvent -> {
+        if(!EventUtil.eventTypeIsPostable(
+                iconUiEventClass,
+                IconUiEvent.Noop.class,
+                IconUiEvent.Default.class,
+                "isis.reflector.facet.domainObjectLayoutAnnotation.iconUiEvent.postForDefault",
+                configuration)) {
+            return null;
+        }
 
-                    final EventBusService eventBusService = servicesInjector.lookupService(EventBusService.class);
+        final EventBusService eventBusService = servicesInjector.lookupService(EventBusService.class);
 
-                    return new IconFacetViaDomainObjectLayoutAnnotationUsingIconUiEvent(
-                            iconUiEvent, eventBusService, facetHolder);
-                })
-                .orElse(null);
+        return new IconFacetViaDomainObjectLayoutAnnotationUsingIconUiEvent(
+                iconUiEventClass, eventBusService, facetHolder);
     }
 
     private final Class<? extends IconUiEvent<?>> iconUiEventClass;
@@ -112,6 +111,11 @@ public class IconFacetViaDomainObjectLayoutAnnotationUsingIconUiEvent extends Ic
         } catch (InstantiationException | IllegalAccessException ex) {
             throw new NonRecoverableException(ex);
         }
+    }
+
+    @Override public void appendAttributesTo(final Map<String, Object> attributeMap) {
+        super.appendAttributesTo(attributeMap);
+        attributeMap.put("iconUiEventClass", iconUiEventClass);
     }
 
 }

@@ -19,7 +19,9 @@
 
 package org.apache.isis.core.metamodel.facets.objectvalue.mandatory;
 
-import org.apache.isis.applib.services.wrapper.events.ValidityEvent;
+import java.util.Map;
+
+import org.apache.isis.applib.events.ValidityEvent;
 import org.apache.isis.core.metamodel.adapter.ObjectAdapter;
 import org.apache.isis.core.metamodel.facetapi.Facet;
 import org.apache.isis.core.metamodel.facetapi.FacetHolder;
@@ -93,5 +95,11 @@ public abstract class MandatoryFacetAbstract extends MarkerFacetAbstract impleme
         final NamedFacet namedFacet = getFacetHolder().getFacet(NamedFacet.class);
         final String name = namedFacet != null? namedFacet.value(): null;
         return name != null? "'" + name + "' is mandatory":"Mandatory";
+    }
+
+    @Override public void appendAttributesTo(final Map<String, Object> attributeMap) {
+        super.appendAttributesTo(attributeMap);
+        attributeMap.put("semantics", semantics);
+        attributeMap.put("inverted", isInvertedSemantics());
     }
 }

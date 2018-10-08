@@ -17,34 +17,42 @@
  *  under the License.
  */
 
-package org.apache.isis.core.metamodel.facets.object.hidden;
+package org.apache.isis.core.metamodel.facets.actions.notinservicemenu.method;
 
-import org.apache.isis.applib.services.wrapper.events.VisibilityEvent;
+import java.lang.reflect.Method;
+import java.util.Map;
+
+import org.apache.isis.applib.events.VisibilityEvent;
 import org.apache.isis.core.metamodel.adapter.ObjectAdapter;
-import org.apache.isis.core.metamodel.facetapi.Facet;
-import org.apache.isis.core.metamodel.facetapi.FacetAbstract;
 import org.apache.isis.core.metamodel.facetapi.FacetHolder;
 import org.apache.isis.core.metamodel.interactions.VisibilityContext;
+import org.apache.isis.core.metamodel.facets.actions.notinservicemenu.NotInServiceMenuFacetAbstract;
 
-public abstract class HiddenObjectFacetAbstract extends FacetAbstract implements HiddenObjectFacet {
+/**
+ * @deprecated
+ */
+@Deprecated
+public class NotInServiceMenuFacetViaMethod extends NotInServiceMenuFacetAbstract {
 
-    public static Class<? extends Facet> type() {
-        return HiddenObjectFacet.class;
-    }
+    private final Method method;
 
-    public HiddenObjectFacetAbstract(final FacetHolder holder) {
-        super(type(), holder, Derivation.NOT_DERIVED);
+    public NotInServiceMenuFacetViaMethod(final Method method, final FacetHolder holder) {
+        super(holder);
+        this.method = method;
     }
 
     @Override
     public String hides(final VisibilityContext<? extends VisibilityEvent> ic) {
-        if (!(ic instanceof VisibilityContext)) {
+        final ObjectAdapter owningAdapter = ic.getTarget();
+        if (owningAdapter == null) {
             return null;
         }
-        final ObjectAdapter toValidate = ic.getTarget();
-        return toValidate != null ? hiddenReason(toValidate) : null;
+        final Boolean currentlyHidden = (Boolean) ObjectAdapter.InvokeUtils.invoke(method, owningAdapter);
+        return currentlyHidden.booleanValue() ? "notInServiceMenuXxx() method returning true" : null;
     }
 
-    protected abstract String hiddenReason(ObjectAdapter toHide);
-
+    @Override public void appendAttributesTo(final Map<String, Object> attributeMap) {
+        super.appendAttributesTo(attributeMap);
+        attributeMap.put("method", method);
+    }
 }

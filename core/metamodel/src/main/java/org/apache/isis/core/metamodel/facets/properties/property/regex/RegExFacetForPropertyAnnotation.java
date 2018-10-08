@@ -19,9 +19,11 @@
 
 package org.apache.isis.core.metamodel.facets.properties.property.regex;
 
-import java.util.List;
+import java.util.Map;
 import java.util.regex.Pattern;
+
 import com.google.common.base.Strings;
+
 import org.apache.isis.applib.annotation.Property;
 import org.apache.isis.core.metamodel.facetapi.FacetHolder;
 import org.apache.isis.core.metamodel.facets.Annotations;
@@ -33,33 +35,53 @@ public class RegExFacetForPropertyAnnotation extends RegExFacetAbstract {
     private final Pattern pattern;
 
     public static RegExFacet create(
-            final List<Property> properties,
+            final Property annotation,
             final Class<?> returnType,
             final FacetHolder holder) {
+
+        if (annotation == null) {
+            return null;
+        }
 
         if (!Annotations.isString(returnType)) {
             return null;
         }
 
-        return properties.stream()
-                .filter(property -> Strings.emptyToNull(property.regexPattern()) != null)
-                .findFirst()
-                .map(property -> new RegExFacetForPropertyAnnotation(
-                        property.regexPattern(), property.regexPatternFlags(), holder,
-                        property.regexPatternReplacement()))
-                .orElse(null);
+        final String pattern = annotation.regexPattern();
+        if(Strings.isNullOrEmpty(pattern)) {
+            return null;
+        }
 
+        final String replacement = annotation.regexPatternReplacement();
+        final int patternFlags = annotation.regexPatternFlags();
+
+        return new RegExFacetForPropertyAnnotation(pattern, patternFlags, holder, replacement);
     }
 
     private RegExFacetForPropertyAnnotation(final String pattern, final int patternFlags, final FacetHolder holder, final String replacement) {
-        super(pattern, patternFlags, replacement, holder);
-        this.pattern = Pattern.compile(pattern, patternFlags());
+        super(pattern, "", (patternFlags & Pattern.CASE_INSENSITIVE) == Pattern.CASE_INSENSITIVE, holder, replacement);
+        this.pattern = Pattern.compile(pattern, patternFlags);
+    }
+
+    /**
+     * Unused (for the TitledFacet)
+     */
+    @Override
+    public String format(String text) {
+        return text;
     }
 
     @Override
     public boolean doesNotMatch(final String text) {
-        return text == null || !pattern.matcher(text).matches();
+        if (text == null) {
+            return true;
+        }
+        return !pattern.matcher(text).matches();
     }
 
+    @Override public void appendAttributesTo(final Map<String, Object> attributeMap) {
+        super.appendAttributesTo(attributeMap);
+        attributeMap.put("pattern", pattern);
+    }
 
 }

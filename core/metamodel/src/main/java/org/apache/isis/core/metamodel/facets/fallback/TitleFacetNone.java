@@ -19,6 +19,8 @@
 
 package org.apache.isis.core.metamodel.facets.fallback;
 
+import java.util.Map;
+
 import org.apache.isis.core.metamodel.adapter.ObjectAdapter;
 import org.apache.isis.core.metamodel.facetapi.FacetHolder;
 import org.apache.isis.core.metamodel.facets.object.title.TitleFacetAbstract;
@@ -39,4 +41,8 @@ public class TitleFacetNone extends TitleFacetAbstract {
         return true;
     }
 
+    @Override public void appendAttributesTo(final Map<String, Object> attributeMap) {
+        super.appendAttributesTo(attributeMap);
+        attributeMap.put("regexFacet", regexFacet);
+    }
 }

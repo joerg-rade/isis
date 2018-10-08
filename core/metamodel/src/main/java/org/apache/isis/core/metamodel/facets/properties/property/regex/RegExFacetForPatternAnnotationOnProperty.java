@@ -19,46 +19,56 @@
 
 package org.apache.isis.core.metamodel.facets.properties.property.regex;
 
-import java.util.List;
+import java.util.Map;
 import java.util.regex.Pattern;
 
-import com.google.common.base.Strings;
-
+import org.apache.isis.applib.annotation.RegEx;
 import org.apache.isis.core.metamodel.facetapi.FacetHolder;
 import org.apache.isis.core.metamodel.facets.Annotations;
 import org.apache.isis.core.metamodel.facets.objectvalue.regex.RegExFacet;
 import org.apache.isis.core.metamodel.facets.objectvalue.regex.RegExFacetAbstract;
 
-public class RegExFacetForPatternAnnotationOnProperty extends RegExFacetAbstract {
+/**
+ * @deprecated
+ */
+@Deprecated
+public class RegExFacetForRegExAnnotationOnProperty extends RegExFacetAbstract {
 
     private final Pattern pattern;
 
-    public static RegExFacet create(
-            final List<javax.validation.constraints.Pattern> patterns,
-            final Class<?> returnType, final FacetHolder holder) {
+    public static RegExFacet create(final RegEx annotation, final Class<?> returnType, final FacetHolder holder) {
+
+        if(annotation == null) {
+            return null;
+        }
 
         if (!Annotations.isString(returnType)) {
             return null;
         }
 
-        return patterns.stream()
-                .filter(pattern -> Strings.emptyToNull(pattern.regexp()) != null)
-                .findFirst()
-                .map(pattern ->
-                        new RegExFacetForPatternAnnotationOnProperty(
-                                pattern.regexp(), pattern.flags(), pattern.message(), holder))
-                .orElse(null);
+        final String validationExpression = annotation.validation();
+        final boolean caseSensitive = annotation.caseSensitive();
+        final String formatExpression = annotation.format();
+        final String replacement = "Doesn't match pattern";
+
+        return new RegExFacetForRegExAnnotationOnProperty(validationExpression, formatExpression, caseSensitive, holder, replacement);
     }
 
-    private RegExFacetForPatternAnnotationOnProperty(
-            final String regexp,
-            final javax.validation.constraints.Pattern.Flag[] flags,
-            final String replacement,
-            final FacetHolder holder) {
-        super(regexp, flags, replacement, holder);
-        pattern = Pattern.compile(regexp(), patternFlags());
+    private RegExFacetForRegExAnnotationOnProperty(final String validation, final String format, final boolean caseSensitive, final FacetHolder holder, final String replacement) {
+        super(validation, format, caseSensitive, holder, replacement);
+        pattern = Pattern.compile(validation(), patternFlags());
     }
 
+    @Override
+    public String format(final String text) {
+        if (text == null) {
+            return "<not a string>";
+        }
+        if (format() == null || format().length() == 0) {
+            return text;
+        }
+        return pattern.matcher(text).replaceAll(format());
+    }
 
     @Override
     public boolean doesNotMatch(final String text) {
@@ -66,6 +76,15 @@ public class RegExFacetForPatternAnnotationOnProperty extends RegExFacetAbstract
             return true;
         }
         return !pattern.matcher(text).matches();
+    }
+
+    private int patternFlags() {
+        return !caseSensitive() ? Pattern.CASE_INSENSITIVE : 0;
+    }
+
+    @Override public void appendAttributesTo(final Map<String, Object> attributeMap) {
+        super.appendAttributesTo(attributeMap);
+        attributeMap.put("pattern", pattern);
     }
 
 }

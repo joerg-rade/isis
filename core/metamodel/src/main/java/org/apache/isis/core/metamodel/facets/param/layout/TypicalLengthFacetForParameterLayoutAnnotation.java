@@ -19,7 +19,7 @@
 
 package org.apache.isis.core.metamodel.facets.param.layout;
 
-import java.util.List;
+import java.util.Map;
 
 import org.apache.isis.applib.annotation.ParameterLayout;
 import org.apache.isis.core.metamodel.facetapi.FacetHolder;
@@ -28,27 +28,29 @@ import org.apache.isis.core.metamodel.facets.objectvalue.typicallen.TypicalLengt
 
 public class TypicalLengthFacetForParameterLayoutAnnotation extends TypicalLengthFacetAbstract {
 
-    public static TypicalLengthFacet create(
-            final List<ParameterLayout> parameterLayouts,
-            final FacetHolder holder) {
-
-        return parameterLayouts.stream()
-                .map(ParameterLayout::typicalLength)
-                .filter(typicalLength -> typicalLength != -1)
-                .findFirst()
-                .map(typicalLength -> new TypicalLengthFacetForParameterLayoutAnnotation(typicalLength, holder))
-                .orElse(null);
+    public static TypicalLengthFacet create(ParameterLayout parameterLayout, FacetHolder holder) {
+        if(parameterLayout == null) {
+            return null;
+        }
+        final int typicalLength = parameterLayout.typicalLength();
+        return typicalLength != -1 ? new TypicalLengthFacetForParameterLayoutAnnotation(typicalLength, holder) : null;
     }
 
-    private final int typicalLength;
+    private final int value;
 
     public TypicalLengthFacetForParameterLayoutAnnotation(int typicalLength, FacetHolder holder) {
         super(holder, Derivation.NOT_DERIVED);
-        this.typicalLength = typicalLength;
+        this.value = typicalLength;
     }
 
     @Override
     public int value() {
-        return typicalLength;
+        return value;
     }
+
+    @Override public void appendAttributesTo(final Map<String, Object> attributeMap) {
+        super.appendAttributesTo(attributeMap);
+        attributeMap.put("value", value);
+    }
+
 }

@@ -19,6 +19,10 @@
 
 package org.apache.isis.core.metamodel.facets.actions.command;
 
+import java.util.Map;
+
+import org.apache.isis.applib.annotation.Command.ExecuteIn;
+import org.apache.isis.applib.annotation.Command.Persistence;
 import org.apache.isis.applib.annotation.CommandExecuteIn;
 import org.apache.isis.applib.annotation.CommandPersistence;
 import org.apache.isis.applib.services.command.CommandDtoProcessor;
@@ -42,14 +46,14 @@ public abstract class CommandFacetAbstract extends MarkerFacetAbstract implement
         }
     }
 
-    private final CommandPersistence persistence;
-    private final CommandExecuteIn executeIn;
+    private final Persistence persistence;
+    private final ExecuteIn executeIn;
     private final Enablement enablement;
     private final CommandDtoProcessor processor;
 
     public CommandFacetAbstract(
-            final CommandPersistence persistence,
-            final CommandExecuteIn executeIn,
+            final Persistence persistence,
+            final ExecuteIn executeIn,
             final Enablement enablement,
             final CommandDtoProcessor processor,
             final FacetHolder holder,
@@ -71,12 +75,12 @@ public abstract class CommandFacetAbstract extends MarkerFacetAbstract implement
     }
 
     @Override
-    public CommandPersistence persistence() {
+    public Persistence persistence() {
         return this.persistence;
     }
 
     @Override
-    public CommandExecuteIn executeIn() {
+    public ExecuteIn executeIn() {
         return executeIn;
     }
 
@@ -111,4 +115,11 @@ public abstract class CommandFacetAbstract extends MarkerFacetAbstract implement
         }
     }
 
+    @Override public void appendAttributesTo(final Map<String, Object> attributeMap) {
+        super.appendAttributesTo(attributeMap);
+        attributeMap.put("executeIn", CommandExecuteIn.from(executeIn));
+        attributeMap.put("persistence", CommandPersistence.from(persistence));
+        attributeMap.put("disabled", isDisabled());
+        attributeMap.put("dtoProcessor", processor);
+    }
 }

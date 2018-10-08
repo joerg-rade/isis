@@ -17,19 +17,43 @@
  *  under the License.
  */
 
-package org.apache.isis.core.metamodel.facets.members.describedas.annotprop;
+package org.apache.isis.core.metamodel.facets.members.describedas.staticmethod;
+
+import java.lang.reflect.Method;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 import org.apache.isis.core.metamodel.facetapi.FacetHolder;
+import org.apache.isis.core.metamodel.facets.ImperativeFacet;
 import org.apache.isis.core.metamodel.facets.all.describedas.DescribedAsFacetAbstract;
 
 /**
  * @deprecated
  */
 @Deprecated
-public class DescribedAsFacetOnMemberAnnotation extends DescribedAsFacetAbstract {
+public class DescribedAsFacetStaticMethod extends DescribedAsFacetAbstract implements ImperativeFacet {
 
-    public DescribedAsFacetOnMemberAnnotation(final String value, final FacetHolder holder) {
+    private final Method method;
+
+    public DescribedAsFacetStaticMethod(final String value, final Method method, final FacetHolder holder) {
         super(value, holder);
+        this.method = method;
+    }
+
+    @Override
+    public List<Method> getMethods() {
+        return Collections.singletonList(method);
+    }
+
+    @Override
+    public Intent getIntent(final Method method) {
+        return Intent.UI_HINT;
+    }
+
+    @Override public void appendAttributesTo(final Map<String, Object> attributeMap) {
+        super.appendAttributesTo(attributeMap);
+        ImperativeFacet.Util.appendAttributesTo(this, attributeMap);
     }
 
 }

@@ -20,13 +20,18 @@
 package org.apache.isis.core.metamodel.facets.object.promptStyle;
 
 import org.apache.isis.applib.annotation.PromptStyle;
-import org.apache.isis.core.metamodel.facets.SingleValueFacet;
+import org.apache.isis.core.metamodel.facetapi.FacetHolder;
 
-/**
- * Indicates that the editing of the property should be published.
- */
-public interface PromptStyleFacet extends SingleValueFacet<PromptStyle> {
+public class PromptStyleFacetFallBackToInline extends PromptStyleFacetAbstract {
 
-    PromptStyle value();
+    public PromptStyleFacetFallBackToInline(final FacetHolder holder) {
+        super(holder, Derivation.DERIVED);
+    }
+
+    @Override
+    public PromptStyle value() {
+        return PromptStyle.INLINE;
+    }
+
 
 }

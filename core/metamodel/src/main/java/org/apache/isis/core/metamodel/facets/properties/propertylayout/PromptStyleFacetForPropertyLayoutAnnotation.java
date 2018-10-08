@@ -19,7 +19,7 @@
 
 package org.apache.isis.core.metamodel.facets.properties.propertylayout;
 
-import java.util.List;
+import java.util.Map;
 
 import org.apache.isis.applib.annotation.PromptStyle;
 import org.apache.isis.applib.annotation.PropertyLayout;
@@ -29,6 +29,7 @@ import org.apache.isis.core.metamodel.facets.object.promptStyle.PromptStyleConfi
 import org.apache.isis.core.metamodel.facets.object.promptStyle.PromptStyleFacet;
 import org.apache.isis.core.metamodel.facets.object.promptStyle.PromptStyleFacetAbstract;
 import org.apache.isis.core.metamodel.facets.object.promptStyle.PromptStyleFacetAsConfigured;
+import org.apache.isis.core.metamodel.facets.object.promptStyle.PromptStyleFacetFallBackToInline;
 
 public class PromptStyleFacetForPropertyLayoutAnnotation extends PromptStyleFacetAbstract {
 
@@ -40,50 +41,60 @@ public class PromptStyleFacetForPropertyLayoutAnnotation extends PromptStyleFace
     }
 
     public static PromptStyleFacet create(
-            final List<PropertyLayout> propertyLayouts,
+            final PropertyLayout propertyLayout,
             final IsisConfiguration configuration,
             final FacetHolder holder) {
 
-        return propertyLayouts.stream()
-                .map(PropertyLayout::promptStyle)
-                .filter(promptStyle -> promptStyle != PromptStyle.NOT_SPECIFIED)
-                .findFirst()
-                .map(promptStyle -> {
+        PromptStyle promptStyle = propertyLayout != null? propertyLayout.promptStyle() : null;
 
-                    switch (promptStyle) {
-                    case DIALOG:
-                    case INLINE:
-                        return new PromptStyleFacetForPropertyLayoutAnnotation(promptStyle, holder);
-                    case INLINE_AS_IF_EDIT:
-                        return new PromptStyleFacetForPropertyLayoutAnnotation(PromptStyle.INLINE, holder);
+        if(promptStyle == null) {
+            if (holder.containsDoOpFacet(PromptStyleFacet.class)) {
+                // do not replace
+                return null;
+            }
 
-                    case AS_CONFIGURED:
+            return new PromptStyleFacetFallBackToInline(holder);
+        } else {
 
-                        // do not replace
-                        if (holder.containsDoOpFacet(PromptStyleFacet.class)) {
-                            return null;
-                        }
+            switch (promptStyle) {
+                case DIALOG:
+                case INLINE:
+                    return new PromptStyleFacetForPropertyLayoutAnnotation(promptStyle, holder);
+                case INLINE_AS_IF_EDIT:
+                    return new PromptStyleFacetForPropertyLayoutAnnotation(PromptStyle.INLINE, holder);
 
-                        promptStyle = PromptStyleConfiguration.parse(configuration);
-                        return new PromptStyleFacetAsConfigured(promptStyle, holder);
+                case AS_CONFIGURED:
 
+                    // do not replace
+                    if (holder.containsDoOpFacet(PromptStyleFacet.class)) {
+                        return null;
                     }
-                    throw new IllegalStateException("promptStyle '" + promptStyle + "' not recognised");
-                })
-                .orElseGet(() -> {
 
-                        // do not replace
-                        if (holder.containsDoOpFacet(PromptStyleFacet.class)) {
-                            return null;
-                        }
+                    promptStyle = PromptStyleConfiguration.parse(configuration);
+                    return new PromptStyleFacetAsConfigured(promptStyle, holder);
 
-                        PromptStyle promptStyle = PromptStyleConfiguration.parse(configuration);
-                        return new PromptStyleFacetAsConfigured(promptStyle, holder);
-                });
+                default:
+
+                    // do not replace
+                    if (holder.containsDoOpFacet(PromptStyleFacet.class)) {
+                        return null;
+                    }
+
+                    promptStyle = PromptStyleConfiguration.parse(configuration);
+                    return new PromptStyleFacetAsConfigured(promptStyle, holder);
+            }
+        }
+
     }
 
     @Override
     public PromptStyle value() {
         return promptStyle;
     }
+
+    @Override public void appendAttributesTo(final Map<String, Object> attributeMap) {
+        super.appendAttributesTo(attributeMap);
+        attributeMap.put("promptStyle", promptStyle);
+    }
+
 }

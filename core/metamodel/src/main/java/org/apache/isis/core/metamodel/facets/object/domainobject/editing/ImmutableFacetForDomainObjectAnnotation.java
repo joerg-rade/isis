@@ -19,12 +19,13 @@
 
 package org.apache.isis.core.metamodel.facets.object.domainobject.editing;
 
-import java.util.List;
+import java.util.Map;
 
 import com.google.common.base.Strings;
 
 import org.apache.isis.applib.annotation.DomainObject;
 import org.apache.isis.applib.annotation.Editing;
+import org.apache.isis.applib.annotation.When;
 import org.apache.isis.core.commons.config.IsisConfiguration;
 import org.apache.isis.core.metamodel.adapter.ObjectAdapter;
 import org.apache.isis.core.metamodel.facetapi.Facet;
@@ -38,43 +39,37 @@ public class ImmutableFacetForDomainObjectAnnotation extends ImmutableFacetAbstr
     private final String reason;
 
     public static ImmutableFacet create(
-            final List<DomainObject> domainObjects,
+            final DomainObject domainObject,
             final IsisConfiguration configuration,
             final FacetHolder holder) {
 
-        final EditingObjectsConfiguration setting = EditingObjectsConfiguration.parse(configuration);
+        final Editing editing       = domainObject != null? domainObject.editing() : Editing.AS_CONFIGURED;
+        final String disabledReason = domainObject != null? domainObject.editingDisabledReason(): "Disabled";
 
-        return domainObjects.stream()
-                .filter(domainObject -> domainObject.editing() != Editing.NOT_SPECIFIED)
-                .findFirst()
-                .map(domainObject -> {
-                    final String disabledReason = domainObject.editingDisabledReason();
-                    switch (domainObject.editing()) {
-                    case AS_CONFIGURED:
+        switch (editing) {
+            case AS_CONFIGURED:
 
-                        if(holder.containsDoOpFacet(ImmutableFacet.class)) {
-                            // do not replace
-                            return null;
-                        }
+                if(holder.containsDoOpFacet(ImmutableFacet.class)) {
+                    // do not replace
+                    return null;
+                }
 
-                        return setting == EditingObjectsConfiguration.FALSE
-                                ? (ImmutableFacet) new ImmutableFacetForDomainObjectAnnotationAsConfigured(disabledReason, holder)
-                                : null;
-                    case DISABLED:
-                        return new ImmutableFacetForDomainObjectAnnotation(disabledReason, holder);
-                    case ENABLED:
-                        return null;
-                    }
-                    throw new IllegalStateException("domainObject.editing() not recognised, is " + domainObject.editing());
-                })
-                .orElseGet(() -> setting == EditingObjectsConfiguration.FALSE
-                        ? new ImmutableFacetFromConfiguration("Disabled", holder)
-                        : null
-                );
+                final EditingObjectsConfiguration setting = EditingObjectsConfiguration.parse(configuration);
+                return setting == EditingObjectsConfiguration.FALSE
+                        ? domainObject != null
+                                ? new ImmutableFacetForDomainObjectAnnotationAsConfigured(disabledReason, holder)
+                                : new ImmutableFacetFromConfiguration(disabledReason, holder)
+                        : null;
+            case DISABLED:
+                return new ImmutableFacetForDomainObjectAnnotation(disabledReason, holder);
+            case ENABLED:
+                return null;
+        }
+        return null;
     }
 
     public ImmutableFacetForDomainObjectAnnotation(final String reason, final FacetHolder holder) {
-        super(holder);
+        super(When.ALWAYS, holder);
         this.reason = reason;
     }
 
@@ -89,6 +84,12 @@ public class ImmutableFacetForDomainObjectAnnotation extends ImmutableFacetAbstr
     public void copyOnto(final FacetHolder holder) {
         final Facet facet = new ImmutableFacetForDomainObjectAnnotation(reason, holder);
         FacetUtil.addFacet(facet);
+    }
+
+    @Override
+    public void appendAttributesTo(final Map<String, Object> attributeMap) {
+        super.appendAttributesTo(attributeMap);
+        attributeMap.put("reason", reason);
     }
 
 }

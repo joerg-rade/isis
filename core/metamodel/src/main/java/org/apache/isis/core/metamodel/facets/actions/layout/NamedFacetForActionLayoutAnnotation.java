@@ -17,35 +17,47 @@
  *  under the License.
  */
 
-package org.apache.isis.core.metamodel.facets.actions.layout;
+package org.apache.isis.core.metamodel.facets.members.named.staticmethod;
 
+import java.lang.reflect.Method;
+import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
+import java.util.Map;
 
-import com.google.common.base.Strings;
-import org.apache.isis.applib.annotation.ActionLayout;
 import org.apache.isis.core.metamodel.facetapi.FacetHolder;
-import org.apache.isis.core.metamodel.facets.all.named.NamedFacet;
+import org.apache.isis.core.metamodel.facets.ImperativeFacet;
 import org.apache.isis.core.metamodel.facets.all.named.NamedFacetAbstract;
 
-public class NamedFacetForActionLayoutAnnotation extends NamedFacetAbstract {
+/**
+ * @deprecated
+ */
+@Deprecated
+public class NamedFacetStaticMethod extends NamedFacetAbstract implements ImperativeFacet {
 
-    public static NamedFacet create(
-            final List<ActionLayout> actionLayouts,
-            final FacetHolder holder) {
+    private final Method method;
 
-        return actionLayouts.stream()
-                .map(ActionLayout::named)
-                .map(Strings::emptyToNull)
-                .filter(Objects::nonNull)
-                .findFirst()
-                .map(named -> new NamedFacetForActionLayoutAnnotation(named, holder))
-                .orElse(null);
+    public NamedFacetStaticMethod(final String value, final Method method, final FacetHolder holder) {
+        super(value, /*escaped*/ true, holder);
+        this.method = method;
     }
 
-    private NamedFacetForActionLayoutAnnotation(final String value, final FacetHolder holder) {
+    /**
+     * Returns a singleton list of the {@link Method} provided in the
+     * constructor.
+     */
+    @Override
+    public List<Method> getMethods() {
+        return Collections.singletonList(method);
+    }
 
-        super(value, /*escaped*/ true, holder);
+    @Override
+    public Intent getIntent(final Method method) {
+        return Intent.UI_HINT;
+    }
+
+    @Override public void appendAttributesTo(final Map<String, Object> attributeMap) {
+        super.appendAttributesTo(attributeMap);
+        ImperativeFacet.Util.appendAttributesTo(this, attributeMap);
     }
 
 }

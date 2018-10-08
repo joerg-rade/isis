@@ -17,26 +17,33 @@
  *  under the License.
  */
 
-package org.apache.isis.core.metamodel.facets.fallback;
+package org.apache.isis.core.metamodel.facets.object.typicallen.annotation;
 
-import org.apache.isis.core.metamodel.adapter.ObjectAdapter;
+import java.util.Map;
+
 import org.apache.isis.core.metamodel.facetapi.FacetHolder;
-import org.apache.isis.core.metamodel.facets.actions.defaults.ActionDefaultsFacetAbstract;
+import org.apache.isis.core.metamodel.facets.objectvalue.typicallen.TypicalLengthFacetAbstract;
 
-public class ActionDefaultsFacetNone extends ActionDefaultsFacetAbstract {
+/**
+ * @deprecated
+ */
+@Deprecated
+public class TypicalLengthFacetOnTypeAnnotation extends TypicalLengthFacetAbstract {
 
-    public ActionDefaultsFacetNone(final FacetHolder holder) {
+    private final int value;
+
+    public TypicalLengthFacetOnTypeAnnotation(final int value, final FacetHolder holder) {
         super(holder, Derivation.NOT_DERIVED);
+        this.value = value;
     }
 
     @Override
-    public Object[] getDefaults(final ObjectAdapter inObject) {
-        return null;
+    public int value() {
+        return value;
     }
 
-    @Override
-    public boolean isNoop() {
-        return true;
+    @Override public void appendAttributesTo(final Map<String, Object> attributeMap) {
+        super.appendAttributesTo(attributeMap);
+        attributeMap.put("value", value);
     }
-
 }

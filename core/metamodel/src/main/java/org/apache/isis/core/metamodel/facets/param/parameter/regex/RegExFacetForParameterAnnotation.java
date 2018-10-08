@@ -19,13 +19,14 @@
 
 package org.apache.isis.core.metamodel.facets.param.parameter.regex;
 
-import java.util.List;
+import java.util.Map;
 import java.util.regex.Pattern;
 
 import com.google.common.base.Strings;
 
 import org.apache.isis.applib.annotation.Parameter;
 import org.apache.isis.core.metamodel.facetapi.FacetHolder;
+import org.apache.isis.core.metamodel.facets.Annotations;
 import org.apache.isis.core.metamodel.facets.objectvalue.regex.RegExFacet;
 import org.apache.isis.core.metamodel.facets.objectvalue.regex.RegExFacetAbstract;
 
@@ -34,36 +35,52 @@ public class RegExFacetForParameterAnnotation extends RegExFacetAbstract {
     private final Pattern pattern;
 
     public static RegExFacet create(
-            final List<Parameter> parameters,
+            final Parameter parameter,
             final Class<?> parameterType,
             final FacetHolder holder) {
 
-        return parameters.stream()
-                .filter(parameter -> Strings.emptyToNull(parameter.regexPattern()) != null)
-                .findFirst()
-                .map(parameter -> {
-                    final String pattern = parameter.regexPattern();
-                    final String replacement = parameter.regexPatternReplacement();
-                    final int patternFlags = parameter.regexPatternFlags();
+        if (parameter == null) {
+            return null;
+        }
+        if(!Annotations.isString(parameterType)) {
+            return null;
+        }
 
-                    return new RegExFacetForParameterAnnotation(pattern, patternFlags, replacement, holder);
-                })
-                .orElse(null);
+        final String pattern = parameter.regexPattern();
+        if(Strings.isNullOrEmpty(pattern)) {
+            return null;
+        }
+
+        final String replacement = parameter.regexPatternReplacement();
+        final int patternFlags = parameter.regexPatternFlags();
+
+        return new RegExFacetForParameterAnnotation(pattern, patternFlags, holder, replacement);
     }
 
-    private RegExFacetForParameterAnnotation(
-            final String pattern,
-            final int patternFlags,
-            final String replacement,
-            final FacetHolder holder) {
-        super(pattern, patternFlags, replacement, holder);
+    private RegExFacetForParameterAnnotation(final String pattern, final int patternFlags, final FacetHolder holder, final String replacement) {
+        super(pattern, "", false, holder, replacement);
         this.pattern = Pattern.compile(pattern, patternFlags);
+    }
+
+    /**
+     * Unused (for the TitledFacet)
+     */
+    @Override
+    public String format(String text) {
+        return text;
     }
 
     @Override
     public boolean doesNotMatch(final String text) {
-        return text == null || !pattern.matcher(text).matches();
+        if (text == null) {
+            return true;
+        }
+        return !pattern.matcher(text).matches();
     }
 
+    @Override public void appendAttributesTo(final Map<String, Object> attributeMap) {
+        super.appendAttributesTo(attributeMap);
+        attributeMap.put("pattern", pattern);
+    }
 
 }

@@ -19,19 +19,18 @@
 
 package org.apache.isis.core.metamodel.facets;
 
+import java.util.Map;
+
+import org.apache.isis.applib.annotation.When;
 import org.apache.isis.applib.annotation.Where;
 import org.apache.isis.core.metamodel.facetapi.Facet;
-import org.apache.isis.core.metamodel.facetapi.FacetAbstract;
 import org.apache.isis.core.metamodel.facetapi.FacetHolder;
 
-public abstract class WhereValueFacetAbstract extends FacetAbstract implements WhereValueFacet {
+public abstract class WhenAndWhereValueFacetAbstract extends WhenValueFacetAbstract implements WhenAndWhereValueFacet {
     private final Where where;
 
-    public WhereValueFacetAbstract(
-            final Class<? extends Facet> facetType,
-            final FacetHolder holder,
-            final Where where) {
-        super(facetType, holder, Derivation.NOT_DERIVED);
+    public WhenAndWhereValueFacetAbstract(final Class<? extends Facet> facetType, final FacetHolder holder, final When when, final Where where) {
+        super(facetType, holder, when);
         this.where = where;
     }
 
@@ -44,4 +43,11 @@ public abstract class WhereValueFacetAbstract extends FacetAbstract implements W
     protected String toStringValues() {
         return super.toStringValues() + "; where =" + where.getFriendlyName();
     }
+
+    @Override
+    public void appendAttributesTo(final Map<String, Object> attributeMap) {
+        super.appendAttributesTo(attributeMap);
+        attributeMap.put("where", where);
+    }
+
 }
