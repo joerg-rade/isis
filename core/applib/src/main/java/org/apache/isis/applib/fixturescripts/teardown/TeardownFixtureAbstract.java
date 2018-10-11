@@ -21,13 +21,16 @@ package org.apache.isis.applib.fixturescripts.teardown;
 import javax.inject.Inject;
 import javax.jdo.metadata.TypeMetadata;
 
-import org.apache.isis.applib.fixturescripts.FixtureScript;
-import org.apache.isis.applib.internal.base._Strings;
-import org.apache.isis.applib.services.jdosupport.IsisJdoSupport0;
+import com.google.common.base.Strings;
 
+import org.apache.isis.applib.annotation.Programmatic;
+import org.apache.isis.applib.fixturescripts.FixtureScript;
+import org.apache.isis.applib.services.jdosupport.IsisJdoSupport;
+
+@Programmatic
 public abstract class TeardownFixtureAbstract extends FixtureScript {
 
-    protected void deleteFrom(final Class<?> cls) {
+    protected void deleteFrom(final Class cls) {
         preDeleteFrom(cls);
         final TypeMetadata metadata = isisJdoSupport.getJdoPersistenceManager().getPersistenceManagerFactory()
                 .getMetadata(cls.getName());
@@ -37,10 +40,10 @@ public abstract class TeardownFixtureAbstract extends FixtureScript {
         } else {
             final String schema = metadata.getSchema();
             String table = metadata.getTable();
-            if(_Strings.isNullOrEmpty(table)) {
+            if(Strings.isNullOrEmpty(table)) {
                 table = cls.getSimpleName();
             }
-            if(_Strings.isNullOrEmpty(schema)) {
+            if(Strings.isNullOrEmpty(schema)) {
                 deleteFrom(table);
             } else {
                 deleteFrom(schema, table);
@@ -57,11 +60,11 @@ public abstract class TeardownFixtureAbstract extends FixtureScript {
         isisJdoSupport.executeUpdate(String.format("DELETE FROM \"%s\"", table));
     }
 
-    protected void preDeleteFrom(final Class<?> cls) {}
+    protected void preDeleteFrom(final Class cls) {}
 
-    protected void postDeleteFrom(final Class<?> cls) {}
+    protected void postDeleteFrom(final Class cls) {}
 
     @Inject
-    private IsisJdoSupport0 isisJdoSupport;
+    private IsisJdoSupport isisJdoSupport;
 
 }

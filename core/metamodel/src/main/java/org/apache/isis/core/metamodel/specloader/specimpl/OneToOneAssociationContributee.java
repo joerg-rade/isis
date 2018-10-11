@@ -104,6 +104,11 @@ public class OneToOneAssociationContributee extends OneToOneAssociationDefault i
     }
 
     @Override
+    public ObjectSpecification getOnType() {
+        return serviceAction.getOnType();
+    }
+
+    @Override
     public Identifier getIdentifier() {
         return identifier;
     }
