@@ -44,30 +44,20 @@ public class JarManifestModel extends ModelAbstract<JarManifestModel> {
     private static final long serialVersionUID = 1L;
 
     private static final List<String> VERSION_KEY_CANDIDATES = Arrays.asList("Implementation-Version", "Build-Time");
-    
-    private String aboutMessage;
 
     private final List<JarManifestAttributes> manifests = Lists.newArrayList();
 
     /**
-     * @param aboutMessage
      * @param metaInfManifestIs provide using <tt>getServletContext().getResourceAsStream("/META-INF/MANIFEST.MF")</tt>
      */
-    public JarManifestModel(String aboutMessage, InputStream metaInfManifestIs) {
+    public JarManifestModel(InputStream metaInfManifestIs) {
 
-        this.aboutMessage = aboutMessage;
-        
         Manifest manifest;
         try {
             manifest = new Manifest(metaInfManifestIs);
             manifests.add(JarManifestAttributes.jarName("Web archive (war file)"));
             manifests.add(JarManifestAttributes.jarUrl(null));
             addAttributes(manifest, manifests);
-            
-            // append the version if able to guess
-            String versionIfAny = guessVersion(manifest); 
-            this.aboutMessage = this.aboutMessage + (versionIfAny != null? "\n\n" + versionIfAny: "");
-            
         } catch (Exception ex) {
             // ignore
         } finally {
@@ -198,21 +188,6 @@ public class JarManifestModel extends ModelAbstract<JarManifestModel> {
         }
     }
 
-
-    private static String guessVersion(Manifest manifest) {
-        final Attributes mainAttribs = manifest.getMainAttributes();
-        Set<Entry<Object, Object>> entrySet = mainAttribs.entrySet();
-        for (String candidate : VERSION_KEY_CANDIDATES) {
-            for (Entry<Object, Object> entry : entrySet) {
-                if(candidate.equals(entry.getKey().toString())) {
-                    return entry.getValue().toString();
-                }
-            }
-        }
-        return null;
-    }
-
-
     @Override
     protected JarManifestModel load() {
         return this;
@@ -221,10 +196,6 @@ public class JarManifestModel extends ModelAbstract<JarManifestModel> {
     @Override
     public void setObject(JarManifestModel ex) {
         // no-op
-    }
-
-    public String getAboutMessage() {
-        return aboutMessage;
     }
 
     public List<JarManifestAttributes> getDetail() {
