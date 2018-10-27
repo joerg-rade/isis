@@ -388,7 +388,15 @@ public class DomainObjectInvocationHandler<T> extends DelegatingInvocationHandle
 
         if (getExecutionMode().shouldExecute()) {
             if (targetAdapter.isTransient()) {
-                getPersistenceSessionService().makePersistent(targetAdapter);
+                if(getExecutionMode().shouldFailFast()) {
+                    getPersistenceSessionService().makePersistent(targetAdapter);
+                } else {
+                    try {
+                        getPersistenceSessionService().makePersistent(targetAdapter);
+                    } catch(Exception ignore) {
+                        // ignore
+                    }
+                }
             }
         }
         return null;
@@ -453,7 +461,16 @@ public class DomainObjectInvocationHandler<T> extends DelegatingInvocationHandle
         }
 
         if (getExecutionMode().shouldExecute()) {
-            property.set(targetAdapter, argumentAdapter, getInteractionInitiatedBy());
+            if(getExecutionMode().shouldFailFast()) {
+                property.set(targetAdapter, argumentAdapter, getInteractionInitiatedBy());
+            } else {
+                try {
+                    property.set(targetAdapter, argumentAdapter, getInteractionInitiatedBy());
+                } catch(Exception ignore) {
+                    // ignore
+                }
+            }
+
         }
 
         return null;
@@ -554,7 +571,15 @@ public class DomainObjectInvocationHandler<T> extends DelegatingInvocationHandle
         }
 
         if (getExecutionMode().shouldExecute()) {
-            otma.addElement(targetAdapter, argumentNO, getInteractionInitiatedBy());
+            if(getExecutionMode().shouldFailFast()) {
+                otma.addElement(targetAdapter, argumentNO, getInteractionInitiatedBy());
+            } else {
+                try {
+                    otma.addElement(targetAdapter, argumentNO, getInteractionInitiatedBy());
+                } catch(Exception ignore) {
+                    // ignore
+                }
+            }
         }
 
         return null;
@@ -594,7 +619,15 @@ public class DomainObjectInvocationHandler<T> extends DelegatingInvocationHandle
         }
 
         if (getExecutionMode().shouldExecute()) {
-            collection.removeElement(targetAdapter, argumentAdapter, getInteractionInitiatedBy());
+            if(getExecutionMode().shouldFailFast()) {
+                collection.removeElement(targetAdapter, argumentAdapter, getInteractionInitiatedBy());
+            } else {
+                try {
+                    collection.removeElement(targetAdapter, argumentAdapter, getInteractionInitiatedBy());
+                } catch(Exception ignore) {
+                    // ignore
+                }
+            }
         }
 
         return null;
@@ -655,9 +688,25 @@ public class DomainObjectInvocationHandler<T> extends DelegatingInvocationHandle
 
             final ObjectAdapter mixedInAdapter = null; // if a mixin action, then it will automatically fill in.
 
-            final ObjectAdapter returnedAdapter = objectAction.execute(
-                    targetAdapter, mixedInAdapter, argAdapters,
-                    interactionInitiatedBy);
+
+            ObjectAdapter returnedAdapter;
+
+            if(getExecutionMode().shouldFailFast()) {
+                returnedAdapter = objectAction.execute(
+                        targetAdapter, mixedInAdapter, argAdapters,
+                        interactionInitiatedBy);
+            } else {
+                try {
+                    returnedAdapter = objectAction.execute(
+                            targetAdapter, mixedInAdapter, argAdapters,
+                            interactionInitiatedBy);
+                } catch(Exception ignore) {
+                    // ignore
+                    returnedAdapter = null;
+                }
+
+            }
+
 
             return ObjectAdapter.Util.unwrap(returnedAdapter);
         }
