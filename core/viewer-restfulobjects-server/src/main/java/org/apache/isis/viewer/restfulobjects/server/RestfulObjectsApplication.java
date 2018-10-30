@@ -25,6 +25,7 @@ import org.apache.isis.viewer.restfulobjects.server.mappers.ExceptionMapperForRu
 import org.apache.isis.viewer.restfulobjects.server.resources.DomainObjectResourceServerside;
 import org.apache.isis.viewer.restfulobjects.server.resources.DomainServiceResourceServerside;
 import org.apache.isis.viewer.restfulobjects.server.resources.DomainTypeResourceServerside;
+import org.apache.isis.viewer.restfulobjects.server.resources.HealthResourceServerside;
 import org.apache.isis.viewer.restfulobjects.server.resources.HomePageResourceServerside;
 import org.apache.isis.viewer.restfulobjects.server.resources.ImageResourceServerside;
 import org.apache.isis.viewer.restfulobjects.server.resources.MenuBarsResourceServerside;
@@ -45,6 +46,7 @@ public class RestfulObjectsApplication extends AbstractJaxRsApplication {
         addClass(DomainObjectResourceServerside.class);
         addClass(DomainServiceResourceServerside.class);
         addClass(VersionResourceServerside.class);
+        addClass(HealthResourceServerside.class);
 
         addClass(SwaggerSpecResource.class);
         
