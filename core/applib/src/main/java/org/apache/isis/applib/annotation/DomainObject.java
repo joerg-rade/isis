@@ -24,6 +24,8 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+import org.apache.isis.applib.services.eventbus.ActionDomainEvent;
+import org.apache.isis.applib.services.eventbus.CollectionDomainEvent;
 import org.apache.isis.applib.services.eventbus.ObjectCreatedEvent;
 import org.apache.isis.applib.services.eventbus.ObjectLoadedEvent;
 import org.apache.isis.applib.services.eventbus.ObjectPersistedEvent;
@@ -31,12 +33,14 @@ import org.apache.isis.applib.services.eventbus.ObjectPersistingEvent;
 import org.apache.isis.applib.services.eventbus.ObjectRemovingEvent;
 import org.apache.isis.applib.services.eventbus.ObjectUpdatedEvent;
 import org.apache.isis.applib.services.eventbus.ObjectUpdatingEvent;
+import org.apache.isis.applib.services.eventbus.PropertyDomainEvent;
+import org.apache.isis.applib.services.publish.PublisherService;
 
 /**
  * Domain semantics for domain objects (entities and view models; for services see {@link org.apache.isis.applib.annotation.DomainService}).
  */
 @Inherited
-@Target({ ElementType.TYPE, ElementType.ANNOTATION_TYPE })
+@Target({ ElementType.TYPE })
 @Retention(RetentionPolicy.RUNTIME)
 public @interface DomainObject {
 
@@ -44,11 +48,11 @@ public @interface DomainObject {
      * Whether the entity should be audited (note: does not apply to view models or other recreatable objects.
      *
      * <p>
-     * Requires that an implementation of the {@link org.apache.isis.applib.services.audit.AuditerService} is
+     * Requires that an implementation of the {@link org.apache.isis.applib.services.audit.AuditingService3} is
      * registered with the framework.
      * </p>
      */
-    Auditing auditing() default Auditing.NOT_SPECIFIED;
+    Auditing auditing() default Auditing.AS_CONFIGURED;
 
 
     // //////////////////////////////////////
@@ -58,11 +62,23 @@ public @interface DomainObject {
      * Whether changes to the object should be published.
      *
      * <p>
-     * Requires that an implementation of the {@link org.apache.isis.applib.services.publish.PublisherService} is
+     * Requires that an implementation of the {@link org.apache.isis.applib.services.publish.PublishingService} is
      * registered with the framework.
      * </p>
      */
-    Publishing publishing() default Publishing.NOT_SPECIFIED;
+    Publishing publishing() default Publishing.AS_CONFIGURED;
+
+    /**
+     * The factory to construct the payload factory.
+     *
+     * <p>
+     *     If not specified then a default implementation will be used.
+     * </p>
+     *
+     * @deprecated - not supported by {@link PublisherService}.
+     */
+    @Deprecated
+    Class<? extends PublishingPayloadFactoryForObject> publishingPayloadFactory() default PublishingPayloadFactoryForObject.class;
 
 
     // //////////////////////////////////////
@@ -96,13 +112,8 @@ public @interface DomainObject {
      * <p>
      *     Takes precedence over auto-complete.
      * </p>
-     *
-     * <p>
-     *     Note: this replaces bounded=true|false prior to v2.x
-     * </p>
-     *
      */
-    Bounding bounding() default Bounding.NOT_SPECIFIED;
+    boolean bounded() default false;
 
 
     // //////////////////////////////////////
@@ -115,7 +126,7 @@ public @interface DomainObject {
      *     Note that non-editable objects can nevertheless have actions invoked upon them.
      * </p>
      */
-    Editing editing() default Editing.NOT_SPECIFIED;
+    Editing editing() default Editing.AS_CONFIGURED;
 
 
     /**
@@ -238,4 +249,82 @@ public @interface DomainObject {
      * </p>
      */
     Class<? extends ObjectRemovingEvent<?>> removingLifecycleEvent() default ObjectRemovingEvent.Default.class;
+
+
+    /**
+     * Indicates that an invocation of <i>any</i> action of the domain object (that do not themselves specify their own
+     * <tt>&#64;Action(domainEvent=...)</tt> should be posted to the
+     * {@link org.apache.isis.applib.services.eventbus.EventBusService event bus} using the specified custom
+     * (subclass of) {@link org.apache.isis.applib.services.eventbus.ActionDomainEvent}.
+     *
+     * <p>For example:
+     * </p>
+     *
+     * <pre>
+     * &#64;DomainObject(actionDomainEvent=SomeObject.GenericActionDomainEvent.class)
+     * public class SomeObject{
+     *     public static class GenericActionDomainEvent extends ActionDomainEvent&lt;Object&gt; { ... }
+     *
+     *     public void changeStartDate(final Date startDate) { ...}
+     *     ...
+     * }
+     * </pre>
+     *
+     * <p>
+     *     This will result in all actions as a more specific type to use) to emit this event.
+     * </p>
+     * <p>
+     * This subclass must provide a no-arg constructor; the fields are set reflectively.
+     * It must also use <tt>Object</tt> as its generic type.  This is to allow mixins to also emit the same event.
+     * </p>
+     */
+    Class<? extends ActionDomainEvent<?>> actionDomainEvent() default ActionDomainEvent.Default.class;
+
+    /**
+     * Indicates that changes to <i>any</i> property of the domain object (that do not themselves specify their own
+     * <tt>&#64;Property(domainEvent=...)</tt> should be posted to the
+     * {@link org.apache.isis.applib.services.eventbus.EventBusService event bus} using the specified custom
+     * (subclass of) {@link org.apache.isis.applib.services.eventbus.PropertyDomainEvent}.
+     *
+     * <p>For example:
+     * </p>
+     *
+     * <pre>
+     * &#64;DomainObject(propertyDomainEvent=SomeObject.GenericPropertyDomainEvent.class)
+     * public class SomeObject{
+     *
+     *    public LocalDate getStartDate() { ...}
+     * }
+     * </pre>
+     *
+     * <p>
+     * This subclass must provide a no-arg constructor; the fields are set reflectively.
+     * It must also use <tt>Object</tt> as its generic type.  This is to allow mixins to also emit the same event.
+     * </p>
+     */
+    Class<? extends PropertyDomainEvent<?,?>> propertyDomainEvent() default PropertyDomainEvent.Default.class;
+
+    /**
+     * Indicates that changes to <i>any</i> collection of the domain object (that do not themselves specify their own
+     * <tt>&#64;Collection(domainEvent=...)</tt>  should be posted to the
+     * {@link org.apache.isis.applib.services.eventbus.EventBusService event bus} using a custom (subclass of)
+     * {@link org.apache.isis.applib.services.eventbus.CollectionDomainEvent}.
+     *
+     * <p>For example:
+     * </p>
+     * <pre>
+     * &#64;DomainObject(collectionDomainEvent=Order.GenericCollectionDomainEvent.class)
+     * public class Order {
+     *
+     *   public SortedSet&lt;OrderLine&gt; getLineItems() { ...}
+     * }
+     * </pre>
+     *
+     * <p>
+     * This subclass must provide a no-arg constructor; the fields are set reflectively.
+     * It must also use <tt>Object</tt> as its generic type.  This is to allow mixins to also emit the same event.
+     * </p>
+     */
+    Class<? extends CollectionDomainEvent<?,?>> collectionDomainEvent() default CollectionDomainEvent.Default.class;
+
 }
