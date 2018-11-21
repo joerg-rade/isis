@@ -18,52 +18,61 @@
  */
 package org.apache.isis.applib.services.eventbus;
 
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
-
+import org.apache.isis.applib.Identifier;
+import org.apache.isis.applib.annotation.ActionSemantics;
 import org.apache.isis.applib.annotation.SemanticsOf;
 import org.apache.isis.applib.services.command.Command;
 import org.apache.isis.applib.services.command.CommandContext;
 import org.apache.isis.applib.util.ObjectContracts;
-import org.apache.isis.applib.util.ToString;
 
-public abstract class ActionDomainEvent<S> extends AbstractDomainEvent<S> {
+public abstract class ActionDomainEvent<S> extends AbstractInteractionEvent<S> {
 
     private static final long serialVersionUID = 1L;
 
-    // -- Default class
+    //region > Default class
     /**
      * This class is the default for the
      * {@link org.apache.isis.applib.annotation.Action#domainEvent()} annotation attribute.  Whether this
      * raises an event or not depends upon the "isis.reflector.facet.actionAnnotation.domainEvent.postForDefault"
      * configuration property.
      */
-    public static class Default extends ActionDomainEvent<Object> {
+    public static class Default extends ActionInteractionEvent<Object> {
         private static final long serialVersionUID = 1L;
+        public Default(){}
+        @Deprecated
+        public Default(Object source, Identifier identifier, Object... arguments) {
+            super(source, identifier, arguments);
+        }
     }
-    
+    //endregion
 
-    // -- Noop class
+    //region > Noop class
 
     /**
      * Convenience class to use indicating that an event should <i>not</i> be posted (irrespective of the configuration
      * property setting for the {@link Default} event.
      */
-    public static class Noop extends ActionDomainEvent<Object> {
+    public static class Noop extends ActionInteractionEvent<Object> {
         private static final long serialVersionUID = 1L;
     }
-    
+    //endregion
 
-    // -- Doop class
+    //region > Doop class
 
     /**
      * Convenience class meaning that an event <i>should</i> be posted (irrespective of the configuration
      * property setting for the {@link Default} event..
      */
-    public static class Doop extends ActionDomainEvent<Object> {
+    public static class Doop extends ActionInteractionEvent<Object> {
         private static final long serialVersionUID = 1L;
     }
-    
+    //endregion
 
+
+    //region > constructors
 
     /**
      * If used then the framework will set state via (non-API) setters.
@@ -75,7 +84,48 @@ public abstract class ActionDomainEvent<S> extends AbstractDomainEvent<S> {
     public ActionDomainEvent() {
     }
 
-    // -- command
+    /**
+     * @deprecated - the {@link #ActionDomainEvent() no-arg constructor} is recommended instead, to reduce boilerplate.
+     */
+    @Deprecated
+    public ActionDomainEvent(
+            final S source,
+            final Identifier identifier) {
+        super(source, identifier);
+    }
+
+    /**
+     * @deprecated - the {@link #ActionDomainEvent() no-arg constructor} is recommended instead, to reduce boilerplate.
+     */
+    @Deprecated
+    public ActionDomainEvent(
+            final S source,
+            final Identifier identifier,
+            final Object... arguments) {
+        this(source, identifier,
+                asList(arguments));
+    }
+
+    private static List<Object> asList(final Object[] arguments) {
+        return arguments != null
+                ? Arrays.asList(arguments)
+                : Collections.emptyList();
+    }
+
+    /**
+     * @deprecated - the {@link #ActionDomainEvent() no-arg constructor} is recommended instead, to reduce boilerplate.
+     */
+    @Deprecated
+    public ActionDomainEvent(
+            final S source,
+            final Identifier identifier,
+            final List<Object> arguments) {
+        this(source, identifier);
+        this.arguments = Collections.unmodifiableList(arguments);
+    }
+    //endregion
+
+    //region > command
     private Command command;
 
     /**
@@ -95,33 +145,33 @@ public abstract class ActionDomainEvent<S> extends AbstractDomainEvent<S> {
     public void setCommand(Command command) {
         this.command = command;
     }
-    
+    //endregion
 
-    // -- actionSemantics
+    //region > actionSemantics
     public SemanticsOf getSemantics() {
-        return actionSemantics;
+        return SemanticsOf.from(actionSemantics);
     }
 
-    private SemanticsOf actionSemantics;
+    private ActionSemantics.Of actionSemantics;
 
     /**
      * @deprecated - use {@link #getSemantics()} instead.
      */
     @Deprecated
-    public SemanticsOf getActionSemantics() {
+    public ActionSemantics.Of getActionSemantics() {
         return actionSemantics;
     }
 
     /**
      * Not API - set by the framework.
      */
-    public void setActionSemantics(SemanticsOf actionSemantics) {
+    public void setActionSemantics(ActionSemantics.Of actionSemantics) {
         this.actionSemantics = actionSemantics;
     }
 
-    
+    //endregion
 
-    // -- parameterNames
+    //region > parameterNames
     private List<String> parameterNames;
     public List<String> getParameterNames() {
         return parameterNames;
@@ -129,9 +179,9 @@ public abstract class ActionDomainEvent<S> extends AbstractDomainEvent<S> {
     public void setParameterNames(final List<String> parameterNames) {
         this.parameterNames = parameterNames;
     }
-    
+    //endregion
 
-    // -- parameterTypes
+    //region > parameterTypes
     private List<Class<?>> parameterTypes;
     public List<Class<?>> getParameterTypes() {
         return parameterTypes;
@@ -140,7 +190,7 @@ public abstract class ActionDomainEvent<S> extends AbstractDomainEvent<S> {
     public void setParameterTypes(final List<Class<?>> parameterTypes) {
         this.parameterTypes = parameterTypes;
     }
-    
+    //endregion
 
 
     // region > mixedIn
@@ -160,11 +210,27 @@ public abstract class ActionDomainEvent<S> extends AbstractDomainEvent<S> {
     }
     // endregion
 
-    // -- arguments
+
+
+    // region > subject
+
+    /**
+     * The subject of the event, which will be either the {@link #getSource() source} for a regular action, or the
+     * {@link #getMixedIn() mixed-in} domain object for a mixin.
+     */
+    public Object getSubject() {
+        final Object mixedIn = getMixedIn();
+        return mixedIn != null ? mixedIn : getSource();
+    }
+
+
+    //endregion
+
+    //region > arguments
     private List<Object> arguments;
     /**
-     * The arguments being used to invoke the action; populated at {@link Phase#VALIDATE} and subsequent phases
-     * (but null for {@link Phase#HIDE hidden} and {@link Phase#DISABLE disable} phases).
+     * The arguments being used to invoke the action; populated at {@link org.apache.isis.applib.services.eventbus.AbstractInteractionEvent.Phase#VALIDATE} and subsequent phases
+     * (but null for {@link org.apache.isis.applib.services.eventbus.AbstractInteractionEvent.Phase#HIDE hidden} and {@link org.apache.isis.applib.services.eventbus.AbstractInteractionEvent.Phase#DISABLE disable} phases).
      */
     public List<Object> getArguments() {
         return arguments;
@@ -176,9 +242,9 @@ public abstract class ActionDomainEvent<S> extends AbstractDomainEvent<S> {
     public void setArguments(List<Object> arguments) {
         this.arguments = arguments;
     }
-    
+    //endregion
 
-    // -- returnValue
+    //region > returnValue
     /**
      *
      */
@@ -202,19 +268,13 @@ public abstract class ActionDomainEvent<S> extends AbstractDomainEvent<S> {
     public void setReturnValue(final Object returnValue) {
         this.returnValue = returnValue;
     }
-    
+    //endregion
 
-    
-    private final static ToString<ActionDomainEvent<?>> toString = ObjectContracts.<ActionDomainEvent<?>>
-    		toString("source", ActionDomainEvent::getSource)
-    		.thenToString("identifier", ActionDomainEvent::getIdentifier)
-    		.thenToString("eventPhase", ActionDomainEvent::getEventPhase)
-    		;
-    
+    //region > toString
     @Override
     public String toString() {
-    	return toString.toString(this);
+        return ObjectContracts.toString(this, "source,identifier,phase");
     }
-
+    //endregion
 
 }
