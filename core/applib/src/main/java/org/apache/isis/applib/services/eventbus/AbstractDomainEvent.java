@@ -20,14 +20,11 @@ package org.apache.isis.applib.services.eventbus;
 
 import java.util.EventObject;
 import java.util.Map;
-
+import com.google.common.collect.Maps;
 import org.apache.isis.applib.Identifier;
 import org.apache.isis.applib.annotation.Programmatic;
-import org.apache.isis.applib.internal.collections._Maps;
-import org.apache.isis.applib.internal.exceptions._Exceptions;
 import org.apache.isis.applib.services.i18n.TranslatableString;
 import org.apache.isis.applib.util.ObjectContracts;
-import org.apache.isis.applib.util.ToString;
 
 public abstract class AbstractDomainEvent<S> extends java.util.EventObject {
 
@@ -55,7 +52,42 @@ public abstract class AbstractDomainEvent<S> extends java.util.EventObject {
         return source != null ? source : new Object();
     }
 
-    // -- Phase
+
+    // region > mixedIn
+    private Object mixedIn;
+
+    /**
+     * Populated only for mixins; holds the underlying domain object that the mixin contributes to.
+     */
+    public Object getMixedIn() {
+        return mixedIn;
+    }
+    /**
+     * Not API - set by the framework.
+     */
+    public void setMixedIn(final Object mixedIn) {
+        this.mixedIn = mixedIn;
+    }
+    // endregion
+
+
+
+    // region > subject
+
+    /**
+     * The subject of the event, which will be either the {@link #getSource() source} for a regular action, or the
+     * {@link #getMixedIn() mixed-in} domain object for a mixin.
+     */
+    public Object getSubject() {
+        final Object mixedIn = getMixedIn();
+        return mixedIn != null ? mixedIn : getSource();
+    }
+
+
+    //endregion
+
+
+    //region > Phase
 
     public enum Phase {
         HIDE,
@@ -73,8 +105,8 @@ public abstract class AbstractDomainEvent<S> extends java.util.EventObject {
         }
 
         /**
-         * When the {@link org.apache.isis.applib.services.command.Command} is made available on the {@link org.apache.isis.applib.services.eventbus.ActionDomainEvent}
-         * via {@link org.apache.isis.applib.services.eventbus.ActionDomainEvent#getCommand()}.
+         * When the {@link org.apache.isis.applib.services.command.Command} is made available on the {@link org.apache.isis.applib.services.eventbus.ActionInteractionEvent}
+         * via {@link org.apache.isis.applib.services.eventbus.ActionInteractionEvent#getCommand()}.
          */
         public boolean isExecutingOrLater() {
             return isExecuting() || isExecuted();
@@ -105,9 +137,9 @@ public abstract class AbstractDomainEvent<S> extends java.util.EventObject {
     public void setEventPhase(Phase phase) {
         this.phase = phase;
     }
-    
+    //endregion
 
-    // -- source (downcast to S)
+    //region > source (downcast to S)
     @Override
     @SuppressWarnings("unchecked")
     public S getSource() {
@@ -120,9 +152,9 @@ public abstract class AbstractDomainEvent<S> extends java.util.EventObject {
     public void setSource(S source) {
         this.source = source;
     }
-    
+    //endregion
 
-    // -- identifier
+    //region > identifier
     /**
      * If the no-arg constructor is used, then the framework will populate this field reflectively.
      */
@@ -137,9 +169,9 @@ public abstract class AbstractDomainEvent<S> extends java.util.EventObject {
     public void setIdentifier(final Identifier identifier) {
         this.identifier = identifier;
     }
-    
+    //endregion
 
-    // -- hide, isHidden
+    //region > hide, isHidden
     private boolean hidden;
     public boolean isHidden() {
         return hidden;
@@ -151,9 +183,9 @@ public abstract class AbstractDomainEvent<S> extends java.util.EventObject {
     public void hide() {
         this.hidden = true;
     }
-    
+    //endregion
 
-    // -- disable, isDisabled, getDisabledReason, getDisabledReasonTranslatable
+    //region > disable, isDisabled, getDisabledReason, getDisabledReasonTranslatable
     private String disabledReason;
 
     public boolean isDisabled() {
@@ -189,9 +221,9 @@ public abstract class AbstractDomainEvent<S> extends java.util.EventObject {
     public void disable(final TranslatableString reason) {
         this.disabledReasonTranslatable = reason;
     }
-    
+    //endregion
 
-    // -- invalidate, isInvalid, getInvalidityReason, getInvalidityReasonTranslatable
+    //region > invalidate, isInvalid, getInvalidityReason, getInvalidityReasonTranslatable
     private String invalidatedReason;
     public boolean isInvalid() {
         return invalidatedReason != null || invalidatedReasonTranslatable != null;
@@ -227,9 +259,9 @@ public abstract class AbstractDomainEvent<S> extends java.util.EventObject {
         this.invalidatedReasonTranslatable = reason;
     }
 
-    
+    //endregion
 
-    // -- veto
+    //region > veto
     /**
      * Use instead of {@link #hide()}, {@link #disable(String)} and {@link #invalidate(String)}; just delegates to
      * appropriate vetoing method based upon the {@link #getEventPhase() phase}.
@@ -261,11 +293,6 @@ public abstract class AbstractDomainEvent<S> extends java.util.EventObject {
                 }
                 invalidate(String.format(reason, args));
                 break;
-            case EXECUTED:
-            case EXECUTING:
-            	break;
-            default:
-            	throw _Exceptions.unmatchedCase(getEventPhase());
         }
     }
     /**
@@ -292,20 +319,15 @@ public abstract class AbstractDomainEvent<S> extends java.util.EventObject {
             case VALIDATE:
                 invalidate(translatableReason);
                 break;
-            case EXECUTED:
-            case EXECUTING:
-            	break;
-            default:
-            	throw _Exceptions.unmatchedCase(getEventPhase());
         }
     }
-    
+    //endregion
 
-    // -- userData
+    //region > userData
     /**
      * Provides a mechanism to pass data to the next {@link #getEventPhase() phase}.
      */
-    private final Map<Object, Object> userData = _Maps.newHashMap();
+    private final Map<Object, Object> userData = Maps.newHashMap();
 
     /**
      * Obtain user-data, as set by a previous {@link #getEventPhase() phase}.
@@ -319,18 +341,12 @@ public abstract class AbstractDomainEvent<S> extends java.util.EventObject {
     public void put(Object key, Object value) {
         userData.put(key, value);
     }
-    
-    private final static ToString<AbstractDomainEvent<?>> toString = 
-    		ObjectContracts.<AbstractDomainEvent<?>>
-    		toString("source", AbstractDomainEvent::getSource)
-    		.thenToString("identifier", AbstractDomainEvent::getIdentifier)
-			.thenToString("eventPhase", AbstractDomainEvent::getEventPhase)
-    		;
-    
+    //endregion
+
+    //region > toString
     @Override
     public String toString() {
-    	return toString.toString(this);
+        return ObjectContracts.toString(this, "source","identifier","eventPhase");
     }
-
-
+    //endregion
 }

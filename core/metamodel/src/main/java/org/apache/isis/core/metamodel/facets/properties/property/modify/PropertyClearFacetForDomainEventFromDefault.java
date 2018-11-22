@@ -22,21 +22,24 @@ package org.apache.isis.core.metamodel.facets.properties.property.modify;
 import org.apache.isis.applib.services.eventbus.PropertyDomainEvent;
 import org.apache.isis.core.metamodel.facetapi.FacetHolder;
 import org.apache.isis.core.metamodel.facets.propcoll.accessor.PropertyOrCollectionAccessorFacet;
-import org.apache.isis.core.metamodel.facets.properties.update.clear.PropertyClearFacet;
 import org.apache.isis.core.metamodel.services.ServicesInjector;
+import org.apache.isis.core.metamodel.specloader.SpecificationLoader;
+import org.apache.isis.core.metamodel.specloader.specimpl.OneToOneAssociationMixedIn;
 
-public class PropertyClearFacetForDomainEventFromDefault
-        extends PropertySetterOrClearFacetForDomainEventAbstract
-        implements PropertyClearFacet {
+/**
+ * @deprecated
+ */
+@Deprecated
+public class PropertyDomainEventFacetForPostsPropertyChangedEventAnnotation extends PropertyDomainEventFacetAbstract {
 
-
-    public PropertyClearFacetForDomainEventFromDefault(
+    /**
+     * @param getterFacetIfAny - will be null if this is for a mixin {@link OneToOneAssociationMixedIn}.
+     */
+    public PropertyDomainEventFacetForPostsPropertyChangedEventAnnotation(
             final Class<? extends PropertyDomainEvent<?, ?>> eventType,
-            final PropertyOrCollectionAccessorFacet getterFacet,
-            final PropertyClearFacet clearFacet,
-            final PropertyDomainEventFacetAbstract propertyInteractionFacet,
-            final FacetHolder holder,
-            final ServicesInjector servicesInjector) {
-        super(PropertyClearFacet.class, eventType, getterFacet, null, clearFacet, propertyInteractionFacet, servicesInjector, holder);
+            final PropertyOrCollectionAccessorFacet getterFacetIfAny,
+            final ServicesInjector servicesInjector, final SpecificationLoader specificationLoader, final FacetHolder holder) {
+        super(eventType, getterFacetIfAny, holder, servicesInjector, specificationLoader);
     }
+
 }
