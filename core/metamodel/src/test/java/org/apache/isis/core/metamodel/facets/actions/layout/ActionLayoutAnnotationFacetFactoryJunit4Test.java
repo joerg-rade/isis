@@ -24,6 +24,7 @@ import org.hamcrest.Matchers;
 import org.jmock.Expectations;
 import org.junit.Before;
 import org.junit.Test;
+
 import org.apache.isis.applib.annotation.ActionLayout;
 import org.apache.isis.applib.annotation.Contributed;
 import org.apache.isis.applib.annotation.DomainObject;
