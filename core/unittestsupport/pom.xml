@@ -23,7 +23,7 @@
 	<parent>
 		<groupId>org.apache.isis.core</groupId>
 		<artifactId>isis</artifactId>
-        <version>2.0.0-M1-SNAPSHOT</version>
+        <version>1.16.2</version>
 	</parent>
 
 	<artifactId>isis-core-unittestsupport</artifactId>
@@ -60,14 +60,12 @@
                <artifactId>jmock-junit4</artifactId>
            </dependency>
 
-		<!-- JDO API (non transient, provided by plugin) -->
-        <dependency>
-            <groupId>javax.jdo</groupId>
-            <artifactId>jdo-api</artifactId>
-            <version>${jdo-api.version}</version>
-            <!-- provided by plugins -->
-            <scope>provided</scope>
-        </dependency>
+            <dependency>
+                <groupId>javax.jdo</groupId>
+                <artifactId>jdo-api</artifactId>
+                <version>${jdo-api.version}</version>
+                <optional>true</optional>
+            </dependency>
 
             <dependency>
                 <groupId>org.javassist</groupId>
@@ -94,7 +92,6 @@
                         <artifactId>xml-apis</artifactId>
                     </exclusion>
                 </exclusions>
-                <optional>true</optional>
             </dependency>
 
 	</dependencies>

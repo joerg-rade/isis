@@ -23,10 +23,11 @@
 	<parent>
 		<groupId>org.apache.isis.core</groupId>
 		<artifactId>isis</artifactId>
-        <version>2.0.0-M1-SNAPSHOT</version>
+        <version>1.16.2</version>
 	</parent>
 
 	<artifactId>isis-core-security-shiro</artifactId>
+    <version>1.16.2</version>
 
 	<name>Apache Isis Security Shiro</name>
 
@@ -69,27 +70,25 @@
 			<dependency>
 			    <groupId>org.apache.isis.core</groupId>
 			    <artifactId>isis-core-security-shiro</artifactId>
-				<version>2.0.0-M1-SNAPSHOT</version>
+				<version>1.16.2</version>
 			</dependency>
     	</dependencies>
     </dependencyManagement>
 
 	<dependencies>
-
 		<dependency>
 		    <groupId>org.apache.isis.core</groupId>
 		    <artifactId>isis-core-runtime</artifactId>
+		</dependency>
+		<dependency>
+		    <groupId>org.apache.isis.core</groupId>
+		    <artifactId>isis-core-unittestsupport</artifactId>
+		    <scope>test</scope>
 		</dependency>
 		<dependency>
 		    <groupId>org.apache.isis.core</groupId>
 		    <artifactId>isis-core-runtime</artifactId>
 		    <type>test-jar</type>
-		    <scope>test</scope>
-		</dependency>
-		
-		<dependency>
-		    <groupId>org.apache.isis.core</groupId>
-		    <artifactId>isis-core-unittestsupport</artifactId>
 		    <scope>test</scope>
 		</dependency>
 		
@@ -108,12 +107,11 @@
             <artifactId>shiro-web</artifactId>
         </dependency>
 
-<!-- replaced by javaee-api -->
-<!--         <dependency> -->
-<!--             <groupId>org.apache.geronimo.specs</groupId> -->
-<!--             <artifactId>geronimo-servlet_3.0_spec</artifactId> -->
-<!--             <scope>provided</scope> -->
-<!--         </dependency> -->
+        <dependency>
+            <groupId>org.apache.geronimo.specs</groupId>
+            <artifactId>geronimo-servlet_3.0_spec</artifactId>
+            <scope>provided</scope>
+        </dependency>
 
 	</dependencies>
 </project>

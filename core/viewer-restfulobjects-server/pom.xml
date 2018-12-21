@@ -23,7 +23,7 @@
     <parent>
         <groupId>org.apache.isis.core</groupId>
         <artifactId>isis</artifactId>
-        <version>2.0.0-M1-SNAPSHOT</version>
+        <version>1.16.2</version>
     </parent>
 
     <artifactId>isis-core-viewer-restfulobjects-server</artifactId>
@@ -37,15 +37,6 @@
 
     <dependencies>
 
-		<!-- JDO API (non transient, provided by plugin) -->
-        <dependency>
-            <groupId>javax.jdo</groupId>
-            <artifactId>jdo-api</artifactId>
-            <version>${jdo-api.version}</version>
-            <!-- provided by plugins -->
-            <scope>provided</scope>
-        </dependency>
-
         <dependency>
             <groupId>org.apache.isis.core</groupId>
             <artifactId>isis-core-unittestsupport</artifactId>
@@ -57,15 +48,27 @@
             <artifactId>isis-core-viewer-restfulobjects-rendering</artifactId>
         </dependency>
 
-		<dependency>
-			<groupId>com.fasterxml.jackson.module</groupId>
-			<artifactId>jackson-module-jaxb-annotations</artifactId>
-		</dependency>
+
+        <!-- the javax:* equivalents of these are excluded in 
+             dependencyManagement of resteasy-jaxrs, so  
+             are required here -->           
+        <dependency>
+            <groupId>org.apache.geronimo.specs</groupId>
+            <artifactId>geronimo-servlet_3.0_spec</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.geronimo.specs</groupId>
+            <artifactId>geronimo-annotation_1.0_spec</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.geronimo.specs</groupId>
+            <artifactId>geronimo-activation_1.1_spec</artifactId>
+        </dependency>
 
         <dependency>
             <groupId>org.webjars</groupId>
             <artifactId>webjars-servlet-2.x</artifactId>
         </dependency>
-        
 	</dependencies>
 </project>

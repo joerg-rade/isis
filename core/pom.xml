@@ -29,7 +29,7 @@
 
     <groupId>org.apache.isis.core</groupId>
     <artifactId>isis</artifactId>
-    <version>2.0.0-M1-SNAPSHOT</version>
+    <version>1.16.2</version>
     
     <packaging>pom</packaging>
 
@@ -50,18 +50,18 @@
     </prerequisites>
 
     <properties>
-    	<isis-core.version>2.0.0-M1-SNAPSHOT</isis-core.version>
         <jar-plugin.automaticModuleName>org.apache.isis.core</jar-plugin.automaticModuleName>
         <git-plugin.propertiesDir>org/apache/isis/core</git-plugin.propertiesDir>
 
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
+        <testsToInclude>**/*Test_*.java</testsToInclude>
         <testsToExclude>**/*IntegrationTest.java</testsToExclude>
 
         <!-- remaining properties should not need to be overridden -->
-        <compileSource>1.8</compileSource>
-        <compileTarget>1.8</compileTarget>
+        <compileSource>1.7</compileSource>
+        <compileTarget>1.7</compileTarget>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
         <dependency.locations.enabled>false</dependency.locations.enabled>
@@ -87,39 +87,24 @@
 [5] https://github.com/Eonasdan/bootstrap-datetimepicker/blob/master/LICENSE
 [6] https://github.com/moment/moment/blob/develop/LICENSE</license.additional-notes>
 
-        <!-- JDO API -->
-        
+        <!-- Datanucleus Objectstore -->
         <jdo-api.version>3.1</jdo-api.version>
-        
-        <!-- Isis Datanucleus JDO Plugin dn5 -->
 
-		<dn5-jdo-api.version>3.2.0-m7</dn5-jdo-api.version>
-        <dn5-core.version>5.1.6</dn5-core.version>
-        <dn5-api-jdo.version>5.1.4</dn5-api-jdo.version>
-        <dn5-jdo-query.version>5.0.4</dn5-jdo-query.version>
-        <dn5-rdbms.version>5.1.6</dn5-rdbms.version>
-        <dn5-jodatime.version>5.1.0-release</dn5-jodatime.version>
-        <dn5-maven-plugin.version>5.0.2</dn5-maven-plugin.version>
+        <datanucleus-core.version>4.1.7</datanucleus-core.version>
+        <datanucleus-api-jdo.version>4.1.1</datanucleus-api-jdo.version>
+        <datanucleus-jdo-query.version>4.0.5</datanucleus-jdo-query.version>
+        <datanucleus-rdbms.version>4.1.9</datanucleus-rdbms.version>
 
-		<!-- Isis Datanucleus JDO Plugin dn4 -->
+        <datanucleus-jodatime.version>4.1.0-release</datanucleus-jodatime.version>
+	<!--
+	    ISIS-1288: seen integration tests to fail;
+	    domain object date holding 1-Aug-2015 after xactn retrieved as 31-Jul-2015
 
-		<dn4-jdo-api.version>3.1</dn4-jdo-api.version>
-        <dn4-core.version>4.1.7</dn4-core.version>
-        <dn4-api-jdo.version>4.1.1</dn4-api-jdo.version>
-        <dn4-jdo-query.version>4.0.5</dn4-jdo-query.version>
-        <dn4-rdbms.version>4.1.9</dn4-rdbms.version>
-        <dn4-jodatime.version>4.1.0-release</dn4-jodatime.version>
-        <dn4-maven-plugin.version>4.0.2</dn4-maven-plugin.version>
-        
-        <!-- Isis Resteasy Plugin 3 (for JEE 7 JAX-RS API 2.0) -->
-        
-		<resteasy3-jaxrs.version>3.0.17.Final</resteasy3-jaxrs.version> 
-		
-		<!-- Isis Resteasy Plugin 4 (for JEE 8 JAX-RS API 2.1) -->
-		
-        <resteasy4-jaxrs.version>4.0.0.Beta2</resteasy4-jaxrs.version>
-        
-        <!-- ... -->
+        https://github.com/datanucleus/datanucleus-jodatime/commit/b85795a1bf5f92909a95d2c8f8822bba2ba38b5f
+
+        <datanucleus-jodatime.version>4.1.1</datanucleus-jodatime.version>
+	-->
+        <datanucleus-maven-plugin.version>4.0.2</datanucleus-maven-plugin.version>
 
         <shiro.version>1.2.6</shiro.version>
 
@@ -135,7 +120,6 @@
         <objenesis.version>2.4</objenesis.version>
         <javassist.version>3.20.0-GA</javassist.version>
         <reflections.version>0.9.10</reflections.version>
-        <findbugs-annotations.version>2.0.1</findbugs-annotations.version>
 
         <commons-logging.version>1.2</commons-logging.version>
         <commons-cli.version>1.3.1</commons-cli.version>
@@ -155,6 +139,7 @@
         <!-- using 2.3.3 throws SQL exception in simpleapp integtests -->
         <hsqldb.version>2.3.4</hsqldb.version>
         <log4jdbc-remix.version>0.2.7</log4jdbc-remix.version>
+        <resteasy-jaxrs.version>3.0.24.Final</resteasy-jaxrs.version>
 
         <jetty.version>9.4.3.v20170317</jetty.version>
 
@@ -171,8 +156,6 @@
 
         <guice.version>4.1.0</guice.version>
         <picocontainer.version>2.15</picocontainer.version>
-        
-        <javaee.version>7.0</javaee.version>
 
         <dom4j.version>1.6.1</dom4j.version>
         <jdom.version>2.0.2</jdom.version>
@@ -185,15 +168,15 @@
         <easymock.version>2.5.2</easymock.version>
         <cucumber.version>1.2.4</cucumber.version>
 
-<!--         <geronimo-jsp_2.1_spec.version>1.0.1</geronimo-jsp_2.1_spec.version> -->
-<!--         <geronimo-jta_1.1_spec.version>1.1.1</geronimo-jta_1.1_spec.version> -->
-<!--         <geronimo-jta_1.0.1B_spec.version>1.1.1</geronimo-jta_1.0.1B_spec.version> -->
-<!--         <geronimo-servlet_3.0_spec.version>1.0</geronimo-servlet_3.0_spec.version> -->
-<!--         <geronimo-annotation_1.0_spec.version>1.1.1</geronimo-annotation_1.0_spec.version> -->
-<!--         <geronimo-activation_1.1_spec.version>1.1</geronimo-activation_1.1_spec.version> -->
-<!--         <geronimo-javamail_1.4_spec.version>1.7.1</geronimo-javamail_1.4_spec.version> -->
-<!--         <geronimo-atinject_1.0_spec.version>1.0</geronimo-atinject_1.0_spec.version> -->
-<!--         <geronimo-jcdi_1.0_spec.version>1.0</geronimo-jcdi_1.0_spec.version> -->
+        <geronimo-jsp_2.1_spec.version>1.0.1</geronimo-jsp_2.1_spec.version>
+        <geronimo-jta_1.1_spec.version>1.1.1</geronimo-jta_1.1_spec.version>
+        <geronimo-jta_1.0.1B_spec.version>1.1.1</geronimo-jta_1.0.1B_spec.version>
+        <geronimo-servlet_3.0_spec.version>1.0</geronimo-servlet_3.0_spec.version>
+        <geronimo-annotation_1.0_spec.version>1.1.1</geronimo-annotation_1.0_spec.version>
+        <geronimo-activation_1.1_spec.version>1.1</geronimo-activation_1.1_spec.version>
+        <geronimo-javamail_1.4_spec.version>1.7.1</geronimo-javamail_1.4_spec.version>
+        <geronimo-atinject_1.0_spec.version>1.0</geronimo-atinject_1.0_spec.version>
+        <geronimo-jcdi_1.0_spec.version>1.0</geronimo-jcdi_1.0_spec.version>
 
         <validation-api.version>1.1.0.Final</validation-api.version>
         <transaction-api.version>1.2</transaction-api.version>
@@ -207,7 +190,7 @@
         <connection>scm:git:http://github.com/apache/isis.git</connection>
         <developerConnection>scm:git:https://github.com/apache/isis.git</developerConnection>
         <url>http://github.com/apache/isis</url>
-        <tag>HEAD</tag>
+        <tag>isis-1.16.2</tag>
     </scm>
 
     <url>http://isis.apache.org</url>
@@ -230,16 +213,6 @@
     </mailingLists>
 
     <developers>
-    	<developer>
-            <id>ahuber</id>
-            <name>Andi Huber</name>
-            <email>ahuber@apache.org</email>
-            <roles>
-                <role>pmc</role>
-                <role>committer</role>
-            </roles>
-            <timezone>+1</timezone>
-        </developer>
         <developer>
             <id>danhaywood</id>
             <name>Dan Haywood</name>
@@ -628,12 +601,16 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-surefire-plugin</artifactId>
-                    <version>2.20.1</version>
+                    <version>2.16</version>
                     <configuration>
-                    	<!-- override defaults and include everything unless explicitly excluded -->
+                    <!-- 
                         <includes>
-                            <include>**/*.java</include>
+                            <include>**/Test*.java</include>
+                            <include>**/*Test.java</include>
+                            <include>**/*TestCase.java</include>
+                            <include>**/*Test_*.java</include>
                         </includes>
+                     -->
                         <excludes>
                             <exclude>${testsToExclude}</exclude>
                         </excludes>
@@ -647,7 +624,7 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-surefire-report-plugin</artifactId>
-                    <version>2.20.1</version>
+                    <version>2.16</version>
                     <!-- goal:report is a report so is configured in the 
                         reporting section; invokes phase:test before running itself -->
                 </plugin>
@@ -1138,7 +1115,7 @@ ${license.additional-notes}
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-release-plugin</artifactId>
                 <configuration>
-                    <!-- overrides the default ('clean verify') -->
+                    <!-- overriddes the default ('clean verify') -->
                     <preparationGoals>clean install</preparationGoals>
                     <autoVersionSubmodules>true</autoVersionSubmodules>
                 </configuration>
@@ -1160,34 +1137,16 @@ ${license.additional-notes}
         <!-- is also for benefit of application developers, using scope=import -->
         <dependencies>
         
-            <!-- JEE API -->
-           	<dependency>
-			    <groupId>javax</groupId>
-			    <artifactId>javaee-api</artifactId>
-			    <version>${javaee.version}</version>
-			</dependency>
-			
-			<!-- JDO API -->
-<!-- not managed, because scope=provided can not be overwritten by plugins that are 
-	responsible for providing jdo-api -->			
-<!-- 			<dependency> -->
-<!-- 	            <groupId>javax.jdo</groupId> -->
-<!-- 	            <artifactId>jdo-api</artifactId> -->
-<!-- 	            <version>${jdo-api.version}</version> -->
-<!-- 	            provided by plugins -->
-<!-- 	            <scope>provided</scope> -->
-<!--         	</dependency> -->
-        
             <!-- unittestsupport -->
             <dependency>
                 <groupId>org.apache.isis.core</groupId>
                 <artifactId>isis-core-unittestsupport</artifactId>
-                <version>${isis-core.version}</version>
+                <version>1.16.2</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.isis.core</groupId>
                 <artifactId>isis-core-unittestsupport</artifactId>
-                <version>${isis-core.version}</version>
+                <version>1.16.2</version>
                 <type>test-jar</type>
                 <scope>test</scope>
             </dependency>
@@ -1196,60 +1155,30 @@ ${license.additional-notes}
             <dependency>
                 <groupId>org.apache.isis.core</groupId>
                 <artifactId>isis-core-applib</artifactId>
-                <version>${isis-core.version}</version>
+                <version>1.16.2</version>
                 <type>jar</type>
                 <scope>compile</scope>
             </dependency>
             <dependency>
                 <groupId>org.apache.isis.core</groupId>
                 <artifactId>isis-core-applib</artifactId>
-                <version>${isis-core.version}</version>
+                <version>1.16.2</version>
                 <type>test-jar</type>
                 <scope>test</scope>
-            </dependency>
-	        
-	        <!-- applib-legacy -->
-	        <dependency>
-                <groupId>org.apache.isis.core</groupId>
-                <artifactId>isis-core-applib-legacy</artifactId>
-                <version>${isis-core.version}</version>
-                <type>jar</type>
-                <scope>compile</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.isis.core</groupId>
-                <artifactId>isis-core-applib-legacy</artifactId>
-                <version>${isis-core.version}</version>
-                <type>test-jar</type>
-                <scope>test</scope>
-            </dependency>
-            
-            <!-- provides @Nullable -->
-	        <dependency>
-	        	<groupId>com.google.code.findbugs</groupId>
-	        	<artifactId>annotations</artifactId>
-	        	<version>${findbugs-annotations.version}</version>
-	        </dependency>
-            
-            <!--  reflections/applib -->
-            <dependency>
-                <groupId>org.reflections</groupId>
-                <artifactId>reflections</artifactId>
-                <version>${reflections.version}</version>
             </dependency>
 
             <!-- schema -->
             <dependency>
                 <groupId>org.apache.isis.core</groupId>
                 <artifactId>isis-core-schema</artifactId>
-                <version>${isis-core.version}</version>
+                <version>1.16.2</version>
                 <type>jar</type>
                 <scope>compile</scope>
             </dependency>
             <dependency>
                 <groupId>org.apache.isis.core</groupId>
                 <artifactId>isis-core-schema</artifactId>
-                <version>${isis-core.version}</version>
+                <version>1.16.2</version>
                 <type>test-jar</type>
                 <scope>test</scope>
             </dependency>
@@ -1258,7 +1187,7 @@ ${license.additional-notes}
             <dependency>
                 <groupId>org.apache.isis.core</groupId>
                 <artifactId>isis-core-log4j</artifactId>
-                <version>${isis-core.version}</version>
+                <version>1.16.2</version>
                 <type>jar</type>
                 <scope>compile</scope>
             </dependency>
@@ -1267,30 +1196,14 @@ ${license.additional-notes}
             <dependency>
                 <groupId>org.apache.isis.core</groupId>
                 <artifactId>isis-core-metamodel</artifactId>
-                <version>${isis-core.version}</version>
+                <version>1.16.2</version>
                 <type>jar</type>
                 <scope>compile</scope>
             </dependency>
             <dependency>
                 <groupId>org.apache.isis.core</groupId>
                 <artifactId>isis-core-metamodel</artifactId>
-                <version>${isis-core.version}</version>
-                <type>test-jar</type>
-                <scope>test</scope>
-            </dependency>
-            
-            <!-- metamodel legacy -->
-            <dependency>
-                <groupId>org.apache.isis.core</groupId>
-                <artifactId>isis-core-metamodel-legacy</artifactId>
-                <version>${isis-core.version}</version>
-                <type>jar</type>
-                <scope>compile</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.isis.core</groupId>
-                <artifactId>isis-core-metamodel-legacy</artifactId>
-                <version>${isis-core.version}</version>
+                <version>1.16.2</version>
                 <type>test-jar</type>
                 <scope>test</scope>
             </dependency>
@@ -1299,99 +1212,76 @@ ${license.additional-notes}
             <dependency>
                 <groupId>org.apache.isis.core</groupId>
                 <artifactId>isis-core-runtime</artifactId>
-                <version>${isis-core.version}</version>
+                <version>1.16.2</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.isis.core</groupId>
                 <artifactId>isis-core-runtime</artifactId>
-                <version>${isis-core.version}</version>
+                <version>1.16.2</version>
                 <type>test-jar</type>
                 <scope>test</scope>
             </dependency>
-            
-            <!-- runtime legacy -->
-            <dependency>
-                <groupId>org.apache.isis.core</groupId>
-                <artifactId>isis-core-runtime-legacy</artifactId>
-                <version>${isis-core.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.isis.core</groupId>
-                <artifactId>isis-core-runtime-legacy</artifactId>
-                <version>${isis-core.version}</version>
-                <type>test-jar</type>
-                <scope>test</scope>
-            </dependency>
-            
-            <!-- wrapper -->
             <dependency>
                 <groupId>org.apache.isis.core</groupId>
                 <artifactId>isis-core-wrapper</artifactId>
-                <version>${isis-core.version}</version>
-            </dependency>
-			<dependency>
-                <groupId>org.apache.isis.core</groupId>
-                <artifactId>isis-core-wrapper</artifactId>
-                <version>${isis-core.version}</version>
-                <type>test-jar</type>
-                <scope>test</scope>
+                <version>1.16.2</version>
             </dependency>
 
             <!-- webserver -->
             <dependency>
                 <groupId>org.apache.isis.core</groupId>
                 <artifactId>isis-core-webserver</artifactId>
-                <version>${isis-core.version}</version>
+                <version>1.16.2</version>
             </dependency>
 
             <!-- specsupport -->
             <dependency>
                 <groupId>org.apache.isis.core</groupId>
                 <artifactId>isis-core-specsupport</artifactId>
-                <version>${isis-core.version}</version>
+                <version>1.16.2</version>
             </dependency>
 
             <!-- integtestsupport -->
             <dependency>
                 <groupId>org.apache.isis.core</groupId>
                 <artifactId>isis-core-integtestsupport</artifactId>
-                <version>${isis-core.version}</version>
+                <version>1.16.2</version>
             </dependency>
 
             <!-- Restful Objects viewer -->
             <dependency>
                 <groupId>org.apache.isis.core</groupId>
                 <artifactId>isis-core-viewer-restfulobjects-applib</artifactId>
-                <version>${isis-core.version}</version>
+                <version>1.16.2</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.isis.core</groupId>
                 <artifactId>isis-core-viewer-restfulobjects-applib</artifactId>
-                <version>${isis-core.version}</version>
+                <version>1.16.2</version>
                 <type>test-jar</type>
                 <scope>test</scope>
             </dependency>
             <dependency>
                 <groupId>org.apache.isis.core</groupId>
                 <artifactId>isis-core-viewer-restfulobjects-rendering</artifactId>
-                <version>${isis-core.version}</version>
+                <version>1.16.2</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.isis.core</groupId>
                 <artifactId>isis-core-viewer-restfulobjects-rendering</artifactId>
-                <version>${isis-core.version}</version>
+                <version>1.16.2</version>
                 <type>test-jar</type>
                 <scope>test</scope>
             </dependency>
             <dependency>
                 <groupId>org.apache.isis.core</groupId>
                 <artifactId>isis-core-viewer-restfulobjects-server</artifactId>
-                <version>${isis-core.version}</version>
+                <version>1.16.2</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.isis.core</groupId>
                 <artifactId>isis-core-viewer-restfulobjects-server</artifactId>
-                <version>${isis-core.version}</version>
+                <version>1.16.2</version>
                 <type>test-jar</type>
                 <scope>test</scope>
             </dependency>
@@ -1400,12 +1290,12 @@ ${license.additional-notes}
             <dependency>
                 <groupId>org.apache.isis.core</groupId>
                 <artifactId>isis-core-security</artifactId>
-                <version>${isis-core.version}</version>
+                <version>1.16.2</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.isis.core</groupId>
                 <artifactId>isis-core-security-shiro</artifactId>
-                <version>${isis-core.version}</version>
+                <version>1.16.2</version>
             </dependency>
 
             
@@ -1413,41 +1303,41 @@ ${license.additional-notes}
             <dependency>
                 <groupId>org.apache.isis.core</groupId>
                 <artifactId>isis-core-viewer-wicket-applib</artifactId>
-                <version>${isis-core.version}</version>
+                <version>1.16.2</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.isis.core</groupId>
                 <artifactId>isis-core-viewer-wicket-model</artifactId>
-                <version>${isis-core.version}</version>
+                <version>1.16.2</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.isis.core</groupId>
                 <artifactId>isis-core-viewer-wicket-model</artifactId>
-                <version>${isis-core.version}</version>
+                <version>1.16.2</version>
                 <scope>test</scope>
                 <type>test-jar</type>
             </dependency>
             <dependency>
                 <groupId>org.apache.isis.core</groupId>
                 <artifactId>isis-core-viewer-wicket-ui</artifactId>
-                <version>${isis-core.version}</version>
+                <version>1.16.2</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.isis.core</groupId>
                 <artifactId>isis-core-viewer-wicket-ui</artifactId>
-                <version>${isis-core.version}</version>
+                <version>1.16.2</version>
                 <scope>test</scope>
                 <type>test-jar</type>
             </dependency>
             <dependency>
                 <groupId>org.apache.isis.core</groupId>
                 <artifactId>isis-core-viewer-wicket-impl</artifactId>
-                <version>${isis-core.version}</version>
+                <version>1.16.2</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.isis.core</groupId>
                 <artifactId>isis-core-viewer-wicket-impl</artifactId>
-                <version>${isis-core.version}</version>
+                <version>1.16.2</version>
                 <scope>test</scope>
                 <type>test-jar</type>
             </dependency>
@@ -1456,26 +1346,26 @@ ${license.additional-notes}
             <dependency>
                 <groupId>org.apache.isis.tool</groupId>
                 <artifactId>isis-maven-plugin</artifactId>
-                <version>${isis-core.version}</version>
+                <version>1.16.2</version>
             </dependency>
 
             <!-- Maven dependencies -->
             <dependency>
                 <groupId>org.apache.isis.mavendeps</groupId>
                 <artifactId>isis-mavendeps-intellij</artifactId>
-                <version>${isis-core.version}</version>
+                <version>1.16.2</version>
                 <type>pom</type>
             </dependency>
             <dependency>
                 <groupId>org.apache.isis.mavendeps</groupId>
                 <artifactId>isis-mavendeps-testing</artifactId>
-                <version>${isis-core.version}</version>
+                <version>1.16.2</version>
                 <type>pom</type>
             </dependency>
             <dependency>
                 <groupId>org.apache.isis.mavendeps</groupId>
                 <artifactId>isis-mavendeps-webapp</artifactId>
-                <version>${isis-core.version}</version>
+                <version>1.16.2</version>
                 <type>pom</type>
             </dependency>
 
@@ -1492,8 +1382,6 @@ ${license.additional-notes}
                 <artifactId>guava</artifactId>
                 <version>${guava.version}</version>
             </dependency>
-            
-            <!-- Axon -->
             <dependency>
                 <groupId>org.axonframework</groupId>
                 <artifactId>axon-core</artifactId>
@@ -1561,7 +1449,14 @@ ${license.additional-notes}
                 <artifactId>picocontainer</artifactId>
                 <version>${picocontainer.version}</version>
             </dependency>
-            
+
+            <!--  Reflection/metadata -->
+            <dependency>
+                <groupId>org.reflections</groupId>
+                <artifactId>reflections</artifactId>
+                <version>${reflections.version}</version>
+            </dependency>
+
             <!-- Bytecode libraries -->
             <dependency>
                 <groupId>org.objenesis</groupId>
@@ -1659,6 +1554,41 @@ ${license.additional-notes}
                 <groupId>org.apache.shiro</groupId>
                 <artifactId>shiro-web</artifactId>
                 <version>${shiro.version}</version>
+            </dependency>
+
+
+            <!-- RestEasy -->
+            <dependency>
+                <groupId>org.jboss.resteasy</groupId>
+                <artifactId>resteasy-jaxrs</artifactId>
+                <version>${resteasy-jaxrs.version}</version>
+                <exclusions>
+                    <!-- instead use geronimo-servlet_3.0_spec -->
+                    <exclusion>
+                        <groupId>org.jboss.spec.javax.servlet</groupId>
+                        <artifactId>jboss-servlet-api_3.1_spec</artifactId>
+                    </exclusion>
+                    <!-- instead use org.apache.geronimo.specs:geronimo-annotation_1.0_spec -->
+                    <exclusion>
+                        <groupId>javax.annotation</groupId>
+                        <artifactId>jsr250-api</artifactId>
+                    </exclusion>
+                    <!-- org.apache.geronimo.specs:geronimo-activation_1.1_spec -->
+                    <exclusion>
+                        <groupId>javax.activation</groupId>
+                        <artifactId>activation</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+            <dependency>
+                <groupId>org.jboss.resteasy</groupId>
+                <artifactId>resteasy-jaxb-provider</artifactId>
+                <version>${resteasy-jaxrs.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.jboss.resteasy</groupId>
+                <artifactId>resteasy-jackson-provider</artifactId>
+                <version>${resteasy-jaxrs.version}</version>
             </dependency>
 
             <dependency>
@@ -2019,9 +1949,53 @@ ${license.additional-notes}
                 <scope>test</scope>
             </dependency>
 
+            <!-- Specs -->
+            <dependency>
+                <groupId>org.apache.geronimo.specs</groupId>
+                <artifactId>geronimo-jsp_2.1_spec</artifactId>
+                <version>${geronimo-jsp_2.1_spec.version}</version>
+            </dependency>
+              <dependency>
+                <groupId>org.apache.geronimo.specs</groupId>
+                <artifactId>geronimo-jta_1.1_spec</artifactId>
+                <version>${geronimo-jta_1.1_spec.version}</version>
+              </dependency>
+            <dependency>
+                <groupId>org.apache.geronimo.specs</groupId>
+                <artifactId>geronimo-jta_1.0.1B_spec</artifactId>
+                <version>${geronimo-jta_1.0.1B_spec.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.geronimo.specs</groupId>
+                <artifactId>geronimo-servlet_3.0_spec</artifactId>
+                <version>${geronimo-servlet_3.0_spec.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.geronimo.specs</groupId>
+                <artifactId>geronimo-annotation_1.0_spec</artifactId>
+                <version>${geronimo-annotation_1.0_spec.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.geronimo.specs</groupId>
+                <artifactId>geronimo-activation_1.1_spec</artifactId>
+                <version>${geronimo-activation_1.1_spec.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.geronimo.specs</groupId>
+                <artifactId>geronimo-javamail_1.4_spec</artifactId>
+                <version>${geronimo-javamail_1.4_spec.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.geronimo.specs</groupId>
+                <artifactId>geronimo-atinject_1.0_spec</artifactId>
+                <version>${geronimo-atinject_1.0_spec.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.geronimo.specs</groupId>
+                <artifactId>geronimo-jcdi_1.0_spec</artifactId>
+                <version>${geronimo-jcdi_1.0_spec.version}</version>
+            </dependency>
 
-
-			<!-- JAX-RS API -->
             <dependency>
                 <groupId>org.jboss.spec.javax.ws.rs</groupId>
                 <artifactId>jboss-jaxrs-api_2.0_spec</artifactId>
@@ -2029,11 +2003,44 @@ ${license.additional-notes}
             </dependency>
 
 
-            <!-- VALIDATION API -->
+            <!-- javax APIs -->
             <dependency>
                 <groupId>javax.validation</groupId>
                 <artifactId>validation-api</artifactId>
                 <version>${validation-api.version}</version>
+            </dependency>
+
+
+            <!-- DataNucleus -->
+            <dependency>
+                <groupId>javax.jdo</groupId>
+                <artifactId>jdo-api</artifactId>
+                <version>${jdo-api.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.datanucleus</groupId>
+                <artifactId>datanucleus-core</artifactId>
+                <version>${datanucleus-core.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.datanucleus</groupId>
+                <artifactId>datanucleus-api-jdo</artifactId>
+                <version>${datanucleus-api-jdo.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.datanucleus</groupId>
+                <artifactId>datanucleus-jdo-query</artifactId>
+                <version>${datanucleus-jdo-query.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.datanucleus</groupId>
+                <artifactId>datanucleus-rdbms</artifactId>
+                <version>${datanucleus-rdbms.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.datanucleus</groupId>
+                <artifactId>datanucleus-jodatime</artifactId>
+                <version>${datanucleus-jodatime.version}</version>
             </dependency>
 
             <dependency>
@@ -2060,6 +2067,10 @@ ${license.additional-notes}
     <dependencies>
         <!-- compile dependencies -->
         <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.hamcrest</groupId>
             <artifactId>hamcrest-library</artifactId>
         </dependency>
@@ -2067,6 +2078,7 @@ ${license.additional-notes}
           <groupId>org.slf4j</groupId>
           <artifactId>slf4j-api</artifactId>
         </dependency>
+
 
         <!-- test dependencies -->
         <dependency>
@@ -2087,6 +2099,34 @@ ${license.additional-notes}
     </dependencies>
 
     <profiles>
+
+        <profile>
+            <id>jdk7</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-toolchains-plugin</artifactId>
+                        <version>1.1</version>
+                        <executions>
+                            <execution>
+                                <goals>
+                                    <goal>toolchain</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                        <configuration>
+                            <toolchains>
+                                <jdk>
+                                    <version>1.7</version>
+                                    <vendor>oracle</vendor>
+                                </jdk>
+                            </toolchains>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
         <profile>
             <id>apache-release</id>
             <build>
@@ -2105,7 +2145,7 @@ ${license.additional-notes}
                         <configuration>
                             <toolchains>
                                 <jdk>
-                                    <version>1.8</version>
+                                    <version>1.7</version>
                                     <vendor>oracle</vendor>
                                 </jdk>
                             </toolchains>
@@ -2269,14 +2309,6 @@ ${license.additional-notes}
         <module>mavendeps/intellij</module>
         <module>mavendeps/webapp</module>
         <module>mavendeps/testing</module>
-        
-        <module>plugins/discovery-reflections</module>
-        <module>plugins/eventbus-axon</module>
-        <module>plugins/eventbus-guava</module>
-        <module>plugins/jaxrs-resteasy-3</module>
-        <module>plugins/jaxrs-resteasy-4</module>
-        <module>plugins/jdo-datanucleus-4</module>
-        <module>plugins/jdo-datanucleus-5</module>
     </modules>
 
 </project>
