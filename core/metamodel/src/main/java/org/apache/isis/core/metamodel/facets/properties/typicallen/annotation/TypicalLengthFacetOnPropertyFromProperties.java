@@ -16,36 +16,32 @@
  *  specific language governing permissions and limitations
  *  under the License.
  */
-package org.apache.isis.applib.layout.component;
 
-import java.util.function.Function;
+package org.apache.isis.core.metamodel.facets.properties.typicallen.annotation;
 
 import java.util.Map;
+import java.util.Properties;
 
 import org.apache.isis.core.metamodel.facetapi.FacetHolder;
 import org.apache.isis.core.metamodel.facets.objectvalue.typicallen.TypicalLengthFacetAbstract;
 
-@Deprecated
-public class FieldSet_legacy {
+public class TypicalLengthFacetOnPropertyFromProperties extends TypicalLengthFacetAbstract {
 
+    private final int value;
 
-    @Deprecated //[ahuber] not used, or otherwise replace with java 8+ function variant
-    public static class Util {
-        private Util(){}
-        public static Function<? super FieldSet, String> nameOf() {
-            return new Function<FieldSet, String>() {
-                @Nullable @Override
-                public String apply(@Nullable final FieldSet fieldSet) {
-                    return fieldSet.getName();
-                }
-            };
-        }
+    public TypicalLengthFacetOnPropertyFromProperties(final Properties properties, final FacetHolder holder) {
+        super(holder, Derivation.NOT_DERIVED);
+        this.value = Integer.parseInt(properties.getProperty("value"));
     }
 
- 
+    @Override
+    public int value() {
+        return value;
+    }
 
     @Override public void appendAttributesTo(final Map<String, Object> attributeMap) {
         super.appendAttributesTo(attributeMap);
         attributeMap.put("value", value);
     }
+
 }

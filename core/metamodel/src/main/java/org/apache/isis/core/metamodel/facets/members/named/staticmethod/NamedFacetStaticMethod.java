@@ -16,36 +16,48 @@
  *  specific language governing permissions and limitations
  *  under the License.
  */
-package org.apache.isis.applib.layout.component;
 
-import java.util.function.Function;
+package org.apache.isis.core.metamodel.facets.members.named.staticmethod;
 
+import java.lang.reflect.Method;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.isis.core.metamodel.facetapi.FacetHolder;
-import org.apache.isis.core.metamodel.facets.objectvalue.typicallen.TypicalLengthFacetAbstract;
+import org.apache.isis.core.metamodel.facets.ImperativeFacet;
+import org.apache.isis.core.metamodel.facets.all.named.NamedFacetAbstract;
 
+/**
+ * @deprecated
+ */
 @Deprecated
-public class FieldSet_legacy {
+public class NamedFacetStaticMethod extends NamedFacetAbstract implements ImperativeFacet {
 
+    private final Method method;
 
-    @Deprecated //[ahuber] not used, or otherwise replace with java 8+ function variant
-    public static class Util {
-        private Util(){}
-        public static Function<? super FieldSet, String> nameOf() {
-            return new Function<FieldSet, String>() {
-                @Nullable @Override
-                public String apply(@Nullable final FieldSet fieldSet) {
-                    return fieldSet.getName();
-                }
-            };
-        }
+    public NamedFacetStaticMethod(final String value, final Method method, final FacetHolder holder) {
+        super(value, /*escaped*/ true, holder);
+        this.method = method;
     }
 
- 
+    /**
+     * Returns a singleton list of the {@link Method} provided in the
+     * constructor.
+     */
+    @Override
+    public List<Method> getMethods() {
+        return Collections.singletonList(method);
+    }
+
+    @Override
+    public Intent getIntent(final Method method) {
+        return Intent.UI_HINT;
+    }
 
     @Override public void appendAttributesTo(final Map<String, Object> attributeMap) {
         super.appendAttributesTo(attributeMap);
-        attributeMap.put("value", value);
+        ImperativeFacet.Util.appendAttributesTo(this, attributeMap);
     }
+
 }
