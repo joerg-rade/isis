@@ -17,22 +17,31 @@
  *  under the License.
  */
 
-package org.apache.isis.core.metamodel.facets.properties.renderedasdaybefore.annotation;
+package org.apache.isis.core.metamodel.facets.properties.typicallen.annotation;
+
+import java.util.Map;
+import java.util.Properties;
 
 import org.apache.isis.core.metamodel.facetapi.FacetHolder;
-import org.apache.isis.core.metamodel.facets.objectvalue.renderedadjusted.RenderedAdjustedFacetAbstract;
+import org.apache.isis.core.metamodel.facets.objectvalue.typicallen.TypicalLengthFacetAbstract;
 
-/**
- * @deprecated
- */
-@Deprecated
-public class RenderedAsDayBeforeFacetAnnotationOnProperty extends RenderedAdjustedFacetAbstract {
+public class TypicalLengthFacetOnPropertyFromProperties extends TypicalLengthFacetAbstract {
 
-    private static final int ADJUST_BY = -1;
+    private final int value;
 
-    public RenderedAsDayBeforeFacetAnnotationOnProperty(final FacetHolder holder) {
-        super(ADJUST_BY, holder);
+    public TypicalLengthFacetOnPropertyFromProperties(final Properties properties, final FacetHolder holder) {
+        super(holder, Derivation.NOT_DERIVED);
+        this.value = Integer.parseInt(properties.getProperty("value"));
     }
 
+    @Override
+    public int value() {
+        return value;
+    }
+
+    @Override public void appendAttributesTo(final Map<String, Object> attributeMap) {
+        super.appendAttributesTo(attributeMap);
+        attributeMap.put("value", value);
+    }
 
 }
