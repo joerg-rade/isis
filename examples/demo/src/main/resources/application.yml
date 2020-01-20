@@ -115,3 +115,11 @@ spring:
   banner:
     location: banner.txt
 
+cors:
+  allowed:
+    origins: *
+    headers: *
+    methods: GET,POST,HEAD,PUT
+
+  exposed:
+    headers: *
